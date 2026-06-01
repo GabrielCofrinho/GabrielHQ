@@ -1,0 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap');
+
+*, *::before, *::after { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+}
+
+body {
+    font-family: 'Caveat', cursive;
+    background-color: #DECADE; /* Fundo solicitado */
+    
+    /* LINHAS DO DIÁRIO - PRETAS E BEM VISÍVEIS */
+    background-image: 
+        /* Margem vertical (linha vermelha clássica de caderno) */
+        linear-gradient(90deg, transparent 79px, rgba(255, 0, 0, 0.2) 79px, rgba(255, 0, 0, 0.2) 81px, transparent 81px),
+        /* Linhas horizontais pretas */
+        linear-gradient(rgba(0, 0, 0, 0.25) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 32px;
+    background-attachment: fixed;
+    min-height: 100vh;
+    color: #4F4866;
+}
+
+/* Container principal com recuo para não bater na margem vermelha */
+.page { 
+    max-width: 1000px; 
+    margin: 0 auto; 
+    padding: 40px 20px 40px 110px; 
+}
+
+.header-top {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.logo {
+    font-size: 3.5rem;
+    color: #4F4866; /* Título solicitado */
+    line-height: 1;
+}
+
+/* Grid organizada para os cards não ficarem gigantes */
+.games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 40px;
+}
+
+/* CARD DA TIRINHA */
+.game-card {
+    background: #fff;
+    border: 2px solid #4F4866;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 6px 6px 0px rgba(79, 72, 102, 0.2);
+    width: 100%;
+    max-width: 320px; /* Tamanho controlado do card */
+    margin: 0 auto;
+    transition: transform 0.2s ease;
+}
+
+.game-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Espaço da Imagem (Tirinha.png) */
+.card-thumb {
+    width: 100%;
+    height: 280px; /* Altura fixa para manter o padrão visual */
+    background: #fdfdfd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid #eee;
+}
+
+.card-thumb img { 
+    max-width: 90%; 
+    max-height: 90%; 
+    object-fit: contain; /* Não estica a imagem, mantém a proporção real */
+    display: block; 
+}
+
+.card-info { 
+    padding: 20px; 
+    text-align: center;
+}
+
+/* Estilo do CÓDIGO solicitado */
+.card-codigo {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #4F4866;
+    background: rgba(222, 202, 222, 0.5); /* Cor #DECADE com transparência */
+    padding: 4px 12px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    display: inline-block;
+    border: 1px dashed #4F4866;
+}
+
+.card-info h2 {
+    font-size: 2.2rem;
+    color: #4F4866; /* Nome dos jogos solicitado */
+    margin-bottom: 15px;
+}
+
+/* BOTÃO LER (Estilo Cursivo) */
+.btn-play {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background: #4F4866; /* Botão solicitado */
+    color: #DECADE;      /* Texto solicitado */
+    font-family: 'Caveat', cursive;
+    font-size: 1.8rem;
+    font-weight: 700;
+    text-decoration: none;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 600px) {
+    .page { padding-left: 80px; }
+    .logo { font-size: 2.5rem; }
+    .games-grid { grid-template-columns: 1fr; }
+}
