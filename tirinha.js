@@ -16,7 +16,14 @@ const JOGOS = [
   "Móveis enbocanhadores",
   "Escola gritante parte 1",
   "Escola gritante parte 2",
-  "Basquete"
+  "Basquete",
+  "Batalha",
+  "Cartas",
+  "Estômago-lar",
+  "Construção e destruição",
+  "Parkour",
+  "Astronauta",
+  "Foguete-bomba"
 ];
 
 // Embedding Codigo.txt contents so the site works without a server
@@ -38,5 +45,12 @@ window.CODIGOS = {
   "Móveis enbocanhadores": "0705261TO",
   "Escola gritante parte 1": "1305261TO",
   "Escola gritante parte 2": "1305261TO",
-  "Basquete": "1405261TO"
+  "Basquete": "1405261TO",
+  "Batalha": "2205261TO",
+  "Cartas": "2605261TO",
+  "Estômago-lar": "2605262TO",
+  "Construção e destruição": "2705261TO",
+  "Parkour": "2905261TO",
+  "Astronauta": "2905262TO",
+  "Foguete-bomba": "0306261TO"
 };
