@@ -22,6 +22,17 @@
         }
         .btn-sorteio:hover { transform: scale(1.05); }
 
+        /* NOVO: Botão de Filtro Dourado */
+        .btn-filtro-dourado {
+            background: #fff; color: #b8860b; border: 2px solid #b8860b; border-radius: 8px;
+            padding: 10px 20px; font-size: 1.1rem; font-weight: bold; cursor: pointer;
+            margin-left: 15px; transition: all 0.2s;
+            font-family: 'Caveat', cursive;
+        }
+        .btn-filtro-dourado.ativo {
+            background: #ffd700; color: #4F4866; box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+        }
+
         /* Tela de sobreposição do dado */
         #dados-container {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -111,7 +122,7 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s ease;
-            font-family: 'Caveat', cursive; /* Combina com o estilo do site */
+            font-family: 'Caveat', cursive;
         }
 
         .btn-propria-tirinha:hover {
@@ -209,6 +220,7 @@
             </select>
             
             <button class="btn-sorteio" onclick="sortearTirinha()">🎲 SORTEIO</button>
+            <button id="btn-filtro" class="btn-filtro-dourado" onclick="alternarFiltroDourado()">Os melhores</button>
         </div>
 
         <main id="grid" class="games-grid"></main>
@@ -243,6 +255,7 @@
             <p>Se sua tirinha foi feita no tradicional (papel) não precisa refazer no digital, é só tirar foto!</p>
             <p>Você precisa mandar foto da sua tirinha na mensagem.</p>
             <p>Eu vou ver se a tirinha é apropriada para ficar no site.</p>
+            <p>Se você não enviar a thumbnail da tirinha então eu crio uma.</p>
             <button class="btn-fechar-modal" onclick="fecharModalEnvio()">Entendi</button>
         </div>
     </div>
@@ -251,6 +264,7 @@
     
     <script>
         const grid = document.getElementById('grid');
+        let apenasDouradosAtivo = false; // Controle do estado do filtro novo
 
         function debugLog(msg) {
             try {
@@ -265,11 +279,13 @@
         }
 
         function parseCodigoMeta(codigo) {
-            if (!codigo || typeof codigo !== 'string') return { time: 0, order: 0, rest: '' };
+            if (!codigo || typeof codigo !== 'string') return { time: 0, order: 0, rest: '', rawMonth: '01', rawYear: '26' };
             const only = codigo.trim();
             const day = parseInt(only.slice(0,2), 10);
-            const month = parseInt(only.slice(2,4), 10);
-            const year2 = parseInt(only.slice(4,6), 10);
+            const monthStr = only.slice(2,4);
+            const month = parseInt(monthStr, 10);
+            const yearStr = only.slice(4,6);
+            const year2 = parseInt(yearStr, 10);
             const order = parseInt(only.slice(6,7), 10) || 0;
             const rest = only.slice(7) || '';
             
@@ -278,58 +294,97 @@
             if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
                 time = Date.UTC(year, Math.max(0, month-1), Math.max(1, day));
             }
-            return { time, order, rest };
+            return { time, order, rest, rawMonth: monthStr, rawYear: yearStr };
+        }
+
+        // NOVO: Função para conseguir o nome do mês por extenso
+        function getNomeMes(mesStr) {
+            const meses = {
+                "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril",
+                "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto",
+                "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"
+            };
+            return meses[mesStr] || "Janeiro";
         }
 
         function getOrderedJogos() {
             if (typeof JOGOS === 'undefined' || !Array.isArray(JOGOS)) return [];
             
+            // Filtra primeiro se o botão "Apenas Dourados" estiver ativado
+            let listaFiltrada = JOGOS.slice();
+            if (apenasDouradosAtivo) {
+                listaFiltrada = listaFiltrada.filter(item => item.Dourado === true);
+            }
+
             const sel = document.getElementById('sort-select');
-            if (!sel) return JOGOS.slice();
+            if (!sel) return listaFiltrada;
             const val = sel.value;
 
-            if (val === 'name-asc') return JOGOS.slice().sort((a,b)=> String(a).localeCompare(String(b), 'pt', {sensitivity:'base'}));
-            if (val === 'name-desc') return JOGOS.slice().sort((a,b)=> String(b).localeCompare(String(a), 'pt', {sensitivity:'base'}));
+            if (val === 'name-asc') return listaFiltrada.sort((a,b)=> String(a.nome).localeCompare(String(b.nome), 'pt', {sensitivity:'base'}));
+            if (val === 'name-desc') return listaFiltrada.sort((a,b)=> String(b.nome).localeCompare(String(a.nome), 'pt', {sensitivity:'base'}));
 
-            const list = JOGOS.slice();
-            const withMeta = list.map(name => {
-                const code = window.CODIGOS && window.CODIGOS[name] ? String(window.CODIGOS[name]) : '';
+            const withMeta = listaFiltrada.map(item => {
+                const code = window.CODIGOS && window.CODIGOS[item.nome] ? String(window.CODIGOS[item.nome]) : '';
                 const meta = parseCodigoMeta(code);
-                return { name, meta };
+                return { item, meta };
             });
 
             withMeta.sort((a,b)=>{
                 if (a.meta.time !== b.meta.time) return a.meta.time - b.meta.time;
                 if (a.meta.order !== b.meta.order) return a.meta.order - b.meta.order;
-                return String(a.name).localeCompare(String(b.name), 'pt', {sensitivity:'base'});
+                return String(a.item.nome).localeCompare(String(b.item.nome), 'pt', {sensitivity:'base'});
             });
 
             if (val === 'recent') withMeta.reverse();
 
-            return withMeta.map(x=>x.name);
+            return withMeta.map(x=>x.item);
+        }
+
+        // NOVO: Alterna o estado do filtro dourado ao clicar no botão
+        function alternarFiltroDourado() {
+            apenasDouradosAtivo = !apenasDouradosAtivo;
+            const btn = document.getElementById('btn-filtro');
+            if (apenasDouradosAtivo) {
+                btn.classList.add('ativo');
+            } else {
+                btn.classList.remove('ativo');
+            }
+            carregarTirinhas();
         }
 
         function carregarTirinhas() {
             if (!grid) return;
             grid.innerHTML = '';
             
-            const ordered = getOrderedJogos();
-            debugLog(`Carregando ${ordered.length} tirinhas...`);
+            const orderedObjects = getOrderedJogos();
+            debugLog(`Carregando ${orderedObjects.length} tirinhas...`);
 
-            if (ordered.length === 0) {
-                grid.innerHTML = '<p style="color:#4F4866; text-align:center;">Nenhuma tirinha encontrada. Verifique o arquivo tirinha.js</p>';
+            if (orderedObjects.length === 0) {
+                grid.innerHTML = '<p style="color:#4F4866; text-align:center; font-size: 1.5rem; font-weight: bold;">Nenhuma tirinha encontrada.</p>';
                 return;
             }
 
-            for (const nome of ordered) {
+            for (const item of orderedObjects) {
                 try {
+                    const nome = item.nome;
                     if (!nome) continue; 
 
                     const codigo = window.CODIGOS && window.CODIGOS[nome] ? String(window.CODIGOS[nome]).trim() : '';
+                    const meta = parseCodigoMeta(codigo);
                     const metaText = formatMetaFromCodigo(codigo);
 
+                    // Lógica do texto extra dourado (Ex: Tirinha de Fevereiro de 2026!)
+                    let textoExtraDourado = '';
+                    let classeDourado = '';
+                    
+                    if (item.Dourado) {
+                        classeDourado = 'card-dourado';
+                        const nomeMes = getNomeMes(meta.rawMonth);
+                        textoExtraDourado = `<div class="tag-texto-dourado">Tirinha de ${nomeMes} de 20${meta.rawYear}!</div>`;
+                    }
+
                     const card = document.createElement('div');
-                    card.className = 'game-card';
+                    card.className = `game-card ${classeDourado}`;
                     card.innerHTML = `
                         <div class="card-thumb">
                             <img src="jogos/${nome}/Thumbnail.svg" class="thumbnail">
@@ -337,12 +392,13 @@
                         <div class="card-info">
                             <span class="card-codigo" id="cod-${nome}">${metaText || codigo}</span>
                             <h2>${nome}</h2>
+                            ${textoExtraDourado}
                             <button onclick="abrir('${nome}')" class="btn-play">Ler</button>
                         </div>
                     `;
                     grid.appendChild(card);
                 } catch (err) {
-                    console.error(`Erro ao renderizar: ${nome}`, err);
+                    console.error(`Erro ao renderizar: ${item.nome}`, err);
                 }
             }
         }
@@ -369,7 +425,6 @@
             return `${dateStr} • Ordem ${meta.order} • ${type} (${origin})`;
         }
 
-        // Lógica do Sorteio
         function sortearTirinha() {
             const listaAtual = getOrderedJogos();
             const totalTirinhas = listaAtual.length;
@@ -401,7 +456,7 @@
                 setTimeout(() => {
                     container.style.display = 'none';
                     if (tirinhaSorteada) {
-                        abrir(tirinhaSorteada);
+                        abrir(tirinhaSorteada.nome);
                     }
                 }, 700);
 
@@ -420,7 +475,6 @@
             document.getElementById('leitor').style.display = 'none';
         }
 
-        // NOVO: Funções para abrir/fechar as informações de envio
         function abrirModalEnvio() {
             document.getElementById('modal-envio').style.display = 'flex';
         }
@@ -433,7 +487,6 @@
             const sel = document.getElementById('sort-select');
             if (sel) sel.addEventListener('change', carregarTirinhas);
             
-            // Fecha a janela de envio se a pessoa clicar fora do quadrado branco
             window.addEventListener('click', (e) => {
                 const modal = document.getElementById('modal-envio');
                 if (e.target === modal) fecharModalEnvio();
