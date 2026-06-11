@@ -23,7 +23,14 @@ const JOGOS = [
   { nome: "Construção e destruição", Dourado: false },
   { nome: "Parkour", Dourado: false },
   { nome: "Astronauta", Dourado: false },
-  { nome: "Foguete-bomba", Dourado: false }
+  { nome: "Foguete-bomba", Dourado: false },
+  { nome: "Rivalidade estomacal total parte 1", Dourado: false },
+  { nome: "Rivalidade estomacal total parte 2", Dourado: false },
+  { nome: "Bebês parte 1", Dourado: true },
+  { nome: "Bebês parte 2", Dourado: true },
+  { nome: "Acampamento", Dourado: false },
+  { nome: "Caixa com maçã", Dourado: false },
+  { nome: "A cola mais forte do mundo", Dourado: false }
 ];
 
 window.CODIGOS = {
@@ -51,5 +58,12 @@ window.CODIGOS = {
   "Construção e destruição": "2705261TO",
   "Parkour": "2905261TO",
   "Astronauta": "2905262TO",
-  "Foguete-bomba": "0306261TO"
+  "Foguete-bomba": "0306261TO",
+  "Rivalidade estomacal total parte 1": "0706261TO",
+  "Rivalidade estomacal total parte 2": "0706261TO",
+  "Bebês parte 1": "1905261TO",
+  "Bebês parte 2": "1905261TO",
+  "Acampamento": "1905262TO",
+  "Caixa com maçã": "2005261TO",
+  "A cola mais forte do mundo": "2105261TO"
 };
