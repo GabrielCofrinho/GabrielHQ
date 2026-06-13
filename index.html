@@ -326,6 +326,7 @@
         }
 
         // SISTEMA DE RECONHECIMENTO DE VOZ MELHORADO (MAIS SENSÍVEL)
+        // SISTEMA DE RECONHECIMENTO DE VOZ (IGNORA HÍFENS TRANSFORMANDO EM ESPAÇO)
         function ligarReconhecimentoVoz() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
@@ -345,30 +346,34 @@
                 let textoFalado = event.results[0][0].transcript.toLowerCase().trim();
                 debugLog(`Ouvi original: "${textoFalado}"`);
 
-                // 1. Remove palavras duplicadas/repetidas sequenciais (ex: "bebês bebês" vira "bebês")
+                // 1. Remove palavras duplicadas/repetidas sequenciais
                 textoFalado = textoFalado.replace(/\b(\w+)(?:\s+\1)+\b/g, '$1');
                 
-                // 2. Transforma palavras no plural para singular simples para facilitar a busca (ex: "bebês" vira "bebê")
+                // 2. Transforma plural em singular simples
                 if (textoFalado.endsWith('s') && textoFalado.length > 3) {
                     textoFalado = textoFalado.slice(0, -1);
                 }
                 
-                debugLog(`Ouvi tratado: "${textoFalado}"`);
+                // 3. Finge que qualquer hífen no texto falado é um espaço
+                let textoFaladoLimpo = textoFalado.replace(/-/g, ' ').trim();
+                
+                debugLog(`Ouvi tratado: "${textoFaladoLimpo}"`);
 
                 if (typeof JOGOS === 'undefined' || !Array.isArray(JOGOS)) return;
 
                 let grupoEncontrado = null;
                 let codigoEncontrado = '';
 
-                // Busca por aproximação de palavras e substrings
                 for (const tirinha of JOGOS) {
                     let nomeTirinha = String(tirinha.nome).toLowerCase();
-                    // Limpa "parte X" do nome para cruzar melhor com a voz
                     nomeTirinha = nomeTirinha.replace(/\s*parte\s*\d+/gi, '').trim();
 
-                    // Se o que o usuário falou está contido no título OU o título está contido na frase dita
-                    if (textoFalado.includes(nomeTirinha) || nomeTirinha.includes(textoFalado) || 
-                        textoFalado.split(' ').some(palavra => nomeTirinha.includes(palavra) && palavra.length > 3)) {
+                    // Regra: Se o nome da tirinha original tiver hífen, finge que é espaço!
+                    let nomeTirinhaLimpo = nomeTirinha.replace(/-/g, ' ').trim();
+
+                    // Faz a comparação com os nomes fingindo que os hífens são espaços
+                    if (textoFaladoLimpo.includes(nomeTirinhaLimpo) || nomeTirinhaLimpo.includes(textoFaladoLimpo) || 
+                        textoFaladoLimpo.split(' ').some(palavra => nomeTirinhaLimpo.includes(palavra) && palavra.length > 3)) {
                         
                         codigoEncontrado = window.CODIGOS && window.CODIGOS[tirinha.nome] ? String(window.CODIGOS[tirinha.nome]).trim() : '';
                         
