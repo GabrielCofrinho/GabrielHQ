@@ -325,7 +325,7 @@
             }
         }
 
-        // SISTEMA DE RECONHECIMENTO DE VOZ (PROCURAR POR NOME)
+        // SISTEMA DE RECONHECIMENTO DE VOZ MELHORADO (MAIS SENSÍVEL)
         function ligarReconhecimentoVoz() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
@@ -342,17 +342,34 @@
             debugLog("Ouvindo nome de tirinha...");
 
             recognition.onresult = (event) => {
-                const textoFalado = event.results[0][0].transcript.toLowerCase().trim();
-                debugLog(`Ouvi: "${textoFalado}"`);
+                let textoFalado = event.results[0][0].transcript.toLowerCase().trim();
+                debugLog(`Ouvi original: "${textoFalado}"`);
+
+                // 1. Remove palavras duplicadas/repetidas sequenciais (ex: "bebês bebês" vira "bebês")
+                textoFalado = textoFalado.replace(/\b(\w+)(?:\s+\1)+\b/g, '$1');
+                
+                // 2. Transforma palavras no plural para singular simples para facilitar a busca (ex: "bebês" vira "bebê")
+                if (textoFalado.endsWith('s') && textoFalado.length > 3) {
+                    textoFalado = textoFalado.slice(0, -1);
+                }
+                
+                debugLog(`Ouvi tratado: "${textoFalado}"`);
 
                 if (typeof JOGOS === 'undefined' || !Array.isArray(JOGOS)) return;
 
                 let grupoEncontrado = null;
                 let codigoEncontrado = '';
 
+                // Busca por aproximação de palavras e substrings
                 for (const tirinha of JOGOS) {
-                    const nomeTirinha = String(tirinha.nome).toLowerCase();
-                    if (nomeTirinha.includes(textoFalado) || textoFalado.includes(nomeTirinha)) {
+                    let nomeTirinha = String(tirinha.nome).toLowerCase();
+                    // Limpa "parte X" do nome para cruzar melhor com a voz
+                    nomeTirinha = nomeTirinha.replace(/\s*parte\s*\d+/gi, '').trim();
+
+                    // Se o que o usuário falou está contido no título OU o título está contido na frase dita
+                    if (textoFalado.includes(nomeTirinha) || nomeTirinha.includes(textoFalado) || 
+                        textoFalado.split(' ').some(palavra => nomeTirinha.includes(palavra) && palavra.length > 3)) {
+                        
                         codigoEncontrado = window.CODIGOS && window.CODIGOS[tirinha.nome] ? String(window.CODIGOS[tirinha.nome]).trim() : '';
                         
                         grupoEncontrado = JOGOS.filter(j => {
@@ -584,7 +601,7 @@
                 setTimeout(() => {
                     container.style.display = 'none';
                     if (tirinhaSorteada) {
-                        const cod = window.CODIGOS && window.CODIGOS[tirinhaSorteada.nome] ? String(window.CODIGOS[tirinhaTirada.nome]).trim() : '';
+                        const cod = window.CODIGOS && window.CODIGOS[tirinhaSorteada.nome] ? String(window.CODIGOS[tirinhaSorteada.nome]).trim() : '';
                         
                         const grupoSorteado = JOGOS.filter(j => {
                             const c = window.CODIGOS && window.CODIGOS[j.nome] ? String(window.CODIGOS[j.nome]).trim() : '';
@@ -599,7 +616,6 @@
             }, 1350);
         }
 
-        // CORREÇÃO: Busca direta e limpa no objeto de roteiros usando chaves limpas
         function abrirPorCodigo(codigoAlvo, listaDePastas) {
             if (!Array.isArray(listaDePastas)) {
                 listaDePastas = [listaDePastas];
