@@ -11,7 +11,15 @@
             width: 100%; height: 100%; background: #DECADE; 
             z-index: 9999; text-align: center; overflow-y: auto; 
         }
-        #leitor img { max-width: 90%; margin: 20px; border: 4px solid #4F4866; background: #fff; }
+        /* Ajustado para as imagens ficarem uma abaixo da outra com espaçamento */
+        #leitor-imagens {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        #leitor-imagens img { max-width: 90%; border: 4px solid #4F4866; background: #fff; }
         .btn-voltar { margin: 20px; padding: 10px 20px; cursor: pointer; background: #4F4866; color: white; border: none; border-radius: 8px; font-weight: bold; }
 
         /* ======== ESTILOS DO DADO DINÂMICO ======== */
@@ -22,7 +30,7 @@
         }
         .btn-sorteio:hover { transform: scale(1.05); }
 
-        /* NOVO: Botão de Filtro Dourado */
+        /* Botão de Filtro Dourado */
         .btn-filtro-dourado {
             background: #fff; color: #b8860b; border: 2px solid #b8860b; border-radius: 8px;
             padding: 10px 20px; font-size: 1.1rem; font-weight: bold; cursor: pointer;
@@ -30,6 +38,17 @@
             font-family: 'Caveat', cursive;
         }
         .btn-filtro-dourado.ativo {
+            background: #ffd700; color: #4F4866; box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+        }
+
+        /* Botão de Narração / Voz */
+        .btn-narracao {
+            background: #4F4866; color: white; border: 2px solid #4F4866; border-radius: 8px;
+            padding: 10px 20px; font-size: 1.1rem; font-weight: bold; cursor: pointer;
+            margin-left: 15px; transition: all 0.2s;
+            font-family: 'Caveat', cursive;
+        }
+        .btn-narracao.ativo {
             background: #ffd700; color: #4F4866; box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
         }
 
@@ -221,6 +240,9 @@
             
             <button class="btn-sorteio" onclick="sortearTirinha()">🎲 SORTEIO</button>
             <button id="btn-filtro" class="btn-filtro-dourado" onclick="alternarFiltroDourado()">Os melhores</button>
+            
+            <button id="btn-narracao" class="btn-narracao" onclick="alternarModoVoz()">🔇 Narração: DESLIGADA</button>
+            <button class="btn-sorteio" onclick="ligarReconhecimentoVoz()">🎤 FALAR NOME</button>
         </div>
 
         <main id="grid" class="games-grid"></main>
@@ -232,7 +254,7 @@
 
     <div id="leitor">
         <button class="btn-voltar" onclick="fechar()">← VOLTAR</button>
-        <div><img id="img-foco"></div>
+        <div id="leitor-imagens"></div>
     </div>
 
     <div id="dados-container">
@@ -261,10 +283,98 @@
     </div>
 
     <script src="tirinha.js"></script>
+    <script src="narracao.js"></script>
     
     <script>
         const grid = document.getElementById('grid');
-        let apenasDouradosAtivo = false; // Controle do estado do filtro novo
+        let apenasDouradosAtivo = false; 
+
+        // FUNÇÃO QUE FAZ O NAVEGADOR NARRAR A HISTÓRIA
+        function falarTexto(texto) {
+            if (!window.narracaoModoVozAtivo) return;
+            if (typeof window.speechSynthesis === 'undefined') return;
+            
+            window.speechSynthesis.cancel(); 
+            if (!texto) return;
+
+            const mensagem = new SpeechSynthesisUtterance(texto);
+            mensagem.lang = 'pt-BR';
+            mensagem.rate = 1.1; 
+            window.speechSynthesis.speak(mensagem);
+        }
+
+        // ALTERNAR O MODO NARRAÇÃO (LIGADO/DESLIGADO)
+        function alternarModoVoz() {
+            window.narracaoModoVozAtivo = !window.narracaoModoVozAtivo;
+            const btn = document.getElementById('btn-narracao');
+            
+            if (window.narracaoModoVozAtivo) {
+                btn.classList.add('ativo');
+                btn.innerText = "🔊 Narração: LIGADA";
+                btn.style.background = "#ffd700";
+                btn.style.color = "#4F4866";
+                falarTexto("Modo narração ativado!");
+            } else {
+                btn.classList.remove('ativo');
+                btn.innerText = "🔇 Narração: DESLIGADA";
+                btn.style.background = "#4F4866";
+                btn.style.color = "white";
+                if (typeof window.speechSynthesis !== 'undefined') {
+                    window.speechSynthesis.cancel();
+                }
+            }
+        }
+
+        // SISTEMA DE RECONHECIMENTO DE VOZ (PROCURAR POR NOME)
+        function ligarReconhecimentoVoz() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                debugLog("O navegador não suporta comandos por voz.");
+                return;
+            }
+
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'pt-BR';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.start();
+            debugLog("Ouvindo nome de tirinha...");
+
+            recognition.onresult = (event) => {
+                const textoFalado = event.results[0][0].transcript.toLowerCase().trim();
+                debugLog(`Ouvi: "${textoFalado}"`);
+
+                if (typeof JOGOS === 'undefined' || !Array.isArray(JOGOS)) return;
+
+                let grupoEncontrado = null;
+                let codigoEncontrado = '';
+
+                for (const tirinha of JOGOS) {
+                    const nomeTirinha = String(tirinha.nome).toLowerCase();
+                    if (nomeTirinha.includes(textoFalado) || textoFalado.includes(nomeTirinha)) {
+                        codigoEncontrado = window.CODIGOS && window.CODIGOS[tirinha.nome] ? String(window.CODIGOS[tirinha.nome]).trim() : '';
+                        
+                        grupoEncontrado = JOGOS.filter(j => {
+                            const c = window.CODIGOS && window.CODIGOS[j.nome] ? String(window.CODIGOS[j.nome]).trim() : '';
+                            return c === codigoEncontrado;
+                        });
+                        break;
+                    }
+                }
+
+                if (grupoEncontrado && grupoEncontrado.length > 0) {
+                    const nomesPastas = grupoEncontrado.map(j => j.nome);
+                    abrirPorCodigo(codigoEncontrado, nomesPastas);
+                } else {
+                    debugLog("Nenhuma tirinha parecida encontrada.");
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.log("Erro reconhecimento: ", event.error);
+            };
+        }
 
         function debugLog(msg) {
             try {
@@ -297,7 +407,6 @@
             return { time, order, rest, rawMonth: monthStr, rawYear: yearStr };
         }
 
-        // NOVO: Função para conseguir o nome do mês por extenso
         function getNomeMes(mesStr) {
             const meses = {
                 "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril",
@@ -310,7 +419,6 @@
         function getOrderedJogos() {
             if (typeof JOGOS === 'undefined' || !Array.isArray(JOGOS)) return [];
             
-            // Filtra primeiro se o botão "Apenas Dourados" estiver ativado
             let listaFiltrada = JOGOS.slice();
             if (apenasDouradosAtivo) {
                 listaFiltrada = listaFiltrada.filter(item => item.Dourado === true);
@@ -340,7 +448,6 @@
             return withMeta.map(x=>x.item);
         }
 
-        // NOVO: Alterna o estado do filtro dourado ao clicar no botão
         function alternarFiltroDourado() {
             apenasDouradosAtivo = !apenasDouradosAtivo;
             const btn = document.getElementById('btn-filtro');
@@ -364,41 +471,62 @@
                 return;
             }
 
-            for (const item of orderedObjects) {
-                try {
-                    const nome = item.nome;
-                    if (!nome) continue; 
+            const gruposPorCodigo = {};
+            const chavesOrdenadas = [];
 
-                    const codigo = window.CODIGOS && window.CODIGOS[nome] ? String(window.CODIGOS[nome]).trim() : '';
+            for (const item of orderedObjects) {
+                const codigo = window.CODIGOS && window.CODIGOS[item.nome] ? String(window.CODIGOS[item.nome]).trim() : '';
+                if (!gruposPorCodigo[codigo]) {
+                    gruposPorCodigo[codigo] = [];
+                    chavesOrdenadas.push(codigo); 
+                }
+                gruposPorCodigo[codigo].push(item);
+            }
+
+            for (const codigo of chavesOrdenadas) {
+                try {
+                    const itensDoGrupo = gruposPorCodigo[codigo];
+                    const primeiroItem = itensDoGrupo[0];
                     const meta = parseCodigoMeta(codigo);
                     const metaText = formatMetaFromCodigo(codigo);
 
-                    // Lógica do texto extra dourado (Ex: Tirinha de Fevereiro de 2026!)
-                    let textoExtraDourado = '';
+                    let tituloCard = primeiroItem.nome;
+                    let pastaThumbnail = primeiroItem.nome;
                     let classeDourado = '';
-                    
-                    if (item.Dourado) {
+                    let textoExtraDourado = '';
+
+                    if (primeiroItem.Dourado) {
                         classeDourado = 'card-dourado';
                         const nomeMes = getNomeMes(meta.rawMonth);
                         textoExtraDourado = `<div class="tag-texto-dourado">Tirinha de ${nomeMes} de 20${meta.rawYear}!</div>`;
                     }
 
+                    if (itensDoGrupo.length > 1) {
+                        tituloCard = tituloCard.replace(/\s*parte\s*\d+/gi, '').trim();
+                    }
+
                     const card = document.createElement('div');
                     card.className = `game-card ${classeDourado}`;
+                    
+                    const arrNames = itensDoGrupo.map(i => i.nome.replace(/'/g, "\\'"));
+                    const paramArrayStr = "['" + arrNames.join("','") + "']";
+
+                    const containerBotoesLeitura = `<button onclick="abrirPorCodigo('${codigo.trim()}', ${paramArrayStr})" class="btn-play">Ler</button>`;
+
                     card.innerHTML = `
                         <div class="card-thumb">
-                            <img src="jogos/${nome}/Thumbnail.svg" class="thumbnail">
+                            <img src="jogos/${pastaThumbnail}/Thumbnail.svg" class="thumbnail">
                         </div>
                         <div class="card-info">
-                            <span class="card-codigo" id="cod-${nome}">${metaText || codigo}</span>
-                            <h2>${nome}</h2>
+                            <span class="card-codigo">${metaText || codigo}</span>
+                            <h2>${tituloCard}</h2>
                             ${textoExtraDourado}
-                            <button onclick="abrir('${nome}')" class="btn-play">Ler</button>
+                            ${containerBotoesLeitura}
                         </div>
                     `;
                     grid.appendChild(card);
                 } catch (err) {
-                    console.error(`Erro ao renderizar: ${item.nome}`, err);
+                    console.error(`Erro ao renderizar grupo de código: ${codigo}`, err);
                 }
             }
         }
@@ -426,8 +554,8 @@
         }
 
         function sortearTirinha() {
-            const listaAtual = getOrderedJogos();
-            const totalTirinhas = listaAtual.length;
+            if (typeof JOGOS === 'undefined' || !Array.isArray(JOGOS)) return;
+            const totalTirinhas = JOGOS.length;
             if (totalTirinhas === 0) return;
 
             const container = document.getElementById('dados-container');
@@ -446,7 +574,7 @@
             cube.classList.add('rolling');
 
             const numeroDado = Math.floor(Math.random() * totalTirinhas) + 1;
-            const tirinhaSorteada = listaAtual[numeroDado - 1];
+            const tirinhaSorteada = JOGOS[numeroDado - 1];
 
             setTimeout(() => {
                 cube.classList.remove('rolling');
@@ -456,23 +584,55 @@
                 setTimeout(() => {
                     container.style.display = 'none';
                     if (tirinhaSorteada) {
-                        abrir(tirinhaSorteada.nome);
+                        const cod = window.CODIGOS && window.CODIGOS[tirinhaSorteada.nome] ? String(window.CODIGOS[tirinhaTirada.nome]).trim() : '';
+                        
+                        const grupoSorteado = JOGOS.filter(j => {
+                            const c = window.CODIGOS && window.CODIGOS[j.nome] ? String(window.CODIGOS[j.nome]).trim() : '';
+                            return c === cod;
+                        });
+                        const pastasSorteio = grupoSorteado.map(j => j.nome);
+
+                        abrirPorCodigo(cod, pastasSorteio);
                     }
                 }, 700);
 
             }, 1350);
         }
 
-        function abrir(nomePasta) {
+        // CORREÇÃO: Busca direta e limpa no objeto de roteiros usando chaves limpas
+        function abrirPorCodigo(codigoAlvo, listaDePastas) {
+            if (!Array.isArray(listaDePastas)) {
+                listaDePastas = [listaDePastas];
+            }
+
             document.getElementById('home').style.display = 'none';
             document.getElementById('leitor').style.display = 'block';
-            document.getElementById('img-foco').src = `jogos/${nomePasta}/Tirinha.jpg`;
+            
+            const containerImagens = document.getElementById('leitor-imagens');
+            containerImagens.innerHTML = ''; 
+
+            listaDePastas.forEach(pasta => {
+                const img = document.createElement('img');
+                img.src = `jogos/${pasta}/Tirinha.jpg`;
+                containerImagens.appendChild(img);
+            });
+            
+            const codLimpo = String(codigoAlvo).trim();
+            if (window.NARRACAO_HISTORIAS && window.NARRACAO_HISTORIAS[codLimpo]) {
+                falarTexto(window.NARRACAO_HISTORIAS[codLimpo]);
+            } else {
+                falarTexto(listaDePastas[0]);
+            }
+
             window.scrollTo(0,0);
         }
 
         function fechar() {
             document.getElementById('home').style.display = 'block';
             document.getElementById('leitor').style.display = 'none';
+            if (typeof window.speechSynthesis !== 'undefined') {
+                window.speechSynthesis.cancel();
+            }
         }
 
         function abrirModalEnvio() {
