@@ -302,11 +302,21 @@
         const grid = document.getElementById('grid');
         let apenasDouradosAtivo = false; 
 
-        // Variáveis do Modo para Cegos (Microfone Contínuo Independente)
+        // Variáveis do Modo para Cegos
         let modoCegosAtivo = false;
         let reconhecimentoCegos = null;
 
-        // FUNÇÃO QUE FAZ O NAVEGADOR NARRAR A HISTÓRIA
+        // FUNÇÃO DE SÍNTESE DO MODO CEGO (Para guiar o usuário pelas ações)
+        function emitirAudioCego(texto) {
+            if (typeof window.speechSynthesis === 'undefined' || !texto) return;
+            window.speechSynthesis.cancel();
+            const m = new SpeechSynthesisUtterance(texto);
+            m.lang = 'pt-BR';
+            m.rate = 1.1;
+            window.speechSynthesis.speak(m);
+        }
+
+        // FUNÇÃO QUE FAZ O NAVEGADOR NARRAR A HISTÓRIA (BOTÃO GERAL)
         function falarTexto(texto) {
             if (!window.narracaoModoVozAtivo) return;
             if (typeof window.speechSynthesis === 'undefined') return;
@@ -320,22 +330,30 @@
             window.speechSynthesis.speak(mensagem);
         }
 
-        // ALTERNAR O MODO NARRAÇÃO (LIGADO/DESLIGADO)
+        // LÓGICA DE CONTROLE DA NARRAÇÃO
+        function atualizarInterfaceNarracao() {
+            const btn = document.getElementById('btn-narracao');
+            if (btn) {
+                if (window.narracaoModoVozAtivo) {
+                    btn.classList.add('ativo');
+                    btn.innerText = "🔊 Narração: LIGADA";
+                    btn.style.background = "#ffd700";
+                    btn.style.color = "#4F4866";
+                } else {
+                    btn.classList.remove('ativo');
+                    btn.innerText = "🔇 Narração: DESLIGADA";
+                    btn.style.background = "#4F4866";
+                    btn.style.color = "white";
+                }
+            }
+        }
+
         function alternarModoVoz() {
             window.narracaoModoVozAtivo = !window.narracaoModoVozAtivo;
-            const btn = document.getElementById('btn-narracao');
-            
+            atualizarInterfaceNarracao();
             if (window.narracaoModoVozAtivo) {
-                btn.classList.add('ativo');
-                btn.innerText = "🔊 Narração: LIGADA";
-                btn.style.background = "#ffd700";
-                btn.style.color = "#4F4866";
                 falarTexto("Modo narração ativado!");
             } else {
-                btn.classList.remove('ativo');
-                btn.innerText = "🔇 Narração: DESLIGADA";
-                btn.style.background = "#4F4866";
-                btn.style.color = "white";
                 if (typeof window.speechSynthesis !== 'undefined') {
                     window.speechSynthesis.cancel();
                 }
@@ -343,7 +361,7 @@
         }
 
         // ==========================================
-        //    LÓGICA ISOLADA DO MODO PARA CEGOS
+        //    LÓGICA DO MODO PARA CEGOS
         // ==========================================
 
         function alternarModoCegos() {
@@ -355,16 +373,28 @@
                     btn.classList.add('ativo');
                     btn.innerText = "🟩 Modo para Cegos: LIGADO";
                 }
+                
+                // REGRA ADICIONADA: Ativa automaticamente a Narração padrão quando liga o modo cego
+                window.narracaoModoVozAtivo = true;
+                atualizarInterfaceNarracao();
+
+                emitirAudioCego("Modo para cegos ativado. Diga ajuda para ouvir os comandos.");
                 inicializarReconhecimentoCegos();
             } else {
                 if (btn) {
                     btn.classList.remove('ativo');
                     btn.innerText = "👨‍🦯 Modo para Cegos: DESLIGADO";
                 }
+                
+                // Opcional: Desliga a narração ao sair do modo cego
+                window.narracaoModoVozAtivo = false;
+                atualizarInterfaceNarracao();
+
                 if (reconhecimentoCegos) {
                     try { reconhecimentoCegos.abort(); } catch(e){}
                     reconhecimentoCegos = null;
                 }
+                emitirAudioCego("Modo para cegos desativado.");
             }
         }
 
@@ -378,7 +408,7 @@
             reconhecimentoCegos.lang = 'pt-BR';
             reconhecimentoCegos.interimResults = false;
             reconhecimentoCegos.maxAlternatives = 1;
-            reconhecimentoCegos.continuous = true; // Mantém o microfone sempre aberto
+            reconhecimentoCegos.continuous = true; 
 
             reconhecimentoCegos.onresult = (event) => {
                 const listaResultados = event.results;
@@ -389,28 +419,46 @@
                 debugLog(`Modo Cego ouviu: "${comando}"`);
 
                 if (comando === 'ajuda' || comando.includes('ajuda')) {
-                    debugLog("Comandos: voltar, sorteio, melhores, fechar");
+                    emitirAudioCego("Comandos disponíveis: voltar, sorteio, melhores, listar tirinhas.");
                     return;
                 }
 
                 if (comando === 'voltar' || comando === 'fechar') {
                     fechar();
+                    emitirAudioCego("Voltando para a tela principal.");
                     return;
                 }
 
                 if (comando.includes('sorteio') || comando.includes('dado')) {
+                    emitirAudioCego("Sorteando tirinha agora.");
                     sortearTirinha();
                     return;
                 }
 
                 if (comando.includes('melhores') || comando.includes('filtro')) {
                     alternarFiltroDourado();
+                    emitirAudioCego(apenasDouradosAtivo ? "Filtro ativado. Mostrando apenas os melhores." : "Filtro desativado. Mostrando todas as tirinhas.");
                     return;
                 }
 
-                // Procurar por nomes de tirinhas falados
+                if (comando.includes('listar') || comando.includes('tirinhas') || comando.includes('nomes')) {
+                    if (typeof JOGOS !== 'undefined' && JOGOS.length > 0) {
+                        let listaNomes = [];
+                        JOGOS.forEach(j => {
+                            let n = j.nome.replace(/\s*parte\s*\d+/gi, '').trim();
+                            if (!listaNomes.includes(n)) listaNomes.push(n);
+                        });
+                        emitirAudioCego("Tirinhas disponíveis: " + listaNomes.join(", "));
+                    } else {
+                        emitirAudioCego("Nenhuma tirinha encontrada.");
+                    }
+                    return;
+                }
+
+                // Procurar por nomes falados
                 if (typeof JOGOS !== 'undefined') {
                     let textoLimpo = comando.replace(/-/g, ' ').trim();
+                    let achou = false;
 
                     for (const tirinha of JOGOS) {
                         let nomeTirinhaLimpo = tirinha.nome.toLowerCase().replace(/\s*parte\s*\d+/gi, '').replace(/-/g, ' ').trim();
@@ -420,9 +468,14 @@
                             let grupo = JOGOS.filter(j => (window.CODIGOS && window.CODIGOS[j.nome]) === cod);
                             let pastas = grupo.map(j => j.nome);
                             
-                            abrirPorCodigo(cod, pastas);
+                            emitirAudioCego("Abrindo: " + tirinha.nome.replace(/\s*parte\s*\d+/gi, '').trim());
+                            setTimeout(() => { abrirPorCodigo(cod, pastas); }, 900);
+                            achou = true;
                             break;
                         }
+                    }
+                    if (!achou && comando.length > 3) {
+                        emitirAudioCego("Comando não reconhecido. Diga ajuda.");
                     }
                 }
             };
@@ -443,14 +496,10 @@
 
         function relerEscutaCegos() {
             if (!modoCegosAtivo) return;
-            
-            // CORREÇÃO CRÍTICA: Elimina a instância antiga travada antes de recriar do zero.
             if (reconhecimentoCegos) {
                 try { reconhecimentoCegos.abort(); } catch(e){}
                 reconhecimentoCegos = null;
             }
-            
-            // Pequena folga protetora de milissegundos para o navegador processar a limpeza
             setTimeout(() => {
                 if (modoCegosAtivo) {
                     inicializarReconhecimentoCegos();
@@ -458,7 +507,7 @@
             }, 350); 
         }
 
-        // Atalho por teclado (Enter ou Espaço ativa o modo de escuta contínuo)
+        // Atalho por teclado (Enter ou Espaço ativa o modo)
         document.addEventListener('keydown', (e) => {
             if (!modoCegosAtivo && (e.key === 'Enter' || e.code === 'Space')) {
                 if (document.activeElement.tagName !== 'SELECT' && document.activeElement.tagName !== 'INPUT') {
@@ -468,15 +517,11 @@
             }
         });
 
-        // RECONHECIMENTO DE VOZ PADRÃO (BOTÃO INDIVIDUAL)
+        // RECONHECIMENTO DE VOZ PADRÃO (BOTÃO MANUAL)
         function ligarReconhecimentoVoz() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                debugLog("O navegador não suporta comandos por voz.");
-                return;
-            }
+            if (!SpeechRecognition) return;
 
-            // Desliga temporariamente o modo contínuo se for usar o botão manual único
             if (modoCegosAtivo && reconhecimentoCegos) {
                 try { reconhecimentoCegos.abort(); } catch(e){}
                 reconhecimentoCegos = null;
@@ -488,7 +533,6 @@
             recognition.maxAlternatives = 1;
 
             recognition.start();
-            debugLog("Ouvindo nome de tirinha...");
 
             recognition.onresult = (event) => {
                 let textoFalado = event.results[0][0].transcript.toLowerCase().trim();
@@ -523,8 +567,6 @@
                 if (grupoEncontrado && grupoEncontrado.length > 0) {
                     const nomesPastas = grupoEncontrado.map(j => j.nome);
                     abrirPorCodigo(codigoEncontrado, nomesPastas);
-                } else {
-                    debugLog("Nenhuma tirinha parecida encontrada.");
                 }
             };
 
@@ -748,6 +790,9 @@
                         });
                         const pastasSorteio = grupoSorteado.map(j => j.nome);
 
+                        if (modoCegosAtivo) {
+                            emitirAudioCego("Tirinha número " + numeroDado + " sorteada: " + tirinhaSorteada.nome.replace(/\s*parte\s*\d+/gi, '').trim());
+                        }
                         abrirPorCodigo(cod, pastasSorteio);
                     }
                 }, 700);
