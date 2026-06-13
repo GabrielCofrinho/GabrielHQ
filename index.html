@@ -52,6 +52,17 @@
             background: #ffd700; color: #4F4866; box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
         }
 
+        /* Botão do Modo para Cegos */
+        .btn-cegos {
+            background: #8b0000; color: white; border: 2px solid #8b0000; border-radius: 8px;
+            padding: 10px 20px; font-size: 1.1rem; font-weight: bold; cursor: pointer;
+            margin-left: 15px; transition: all 0.2s;
+            font-family: 'Caveat', cursive;
+        }
+        .btn-cegos.ativo {
+            background: #006400; border-color: #006400; box-shadow: 0 0 10px rgba(0, 100, 0, 0.6);
+        }
+
         /* Tela de sobreposição do dado */
         #dados-container {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -243,6 +254,8 @@
             
             <button id="btn-narracao" class="btn-narracao" onclick="alternarModoVoz()">🔇 Narração: DESLIGADA</button>
             <button class="btn-sorteio" onclick="ligarReconhecimentoVoz()">🎤 FALAR NOME</button>
+            
+            <button id="btn-cegos" class="btn-cegos" onclick="alternarModoCegos()">👨‍🦯 Modo para Cegos: DESLIGADO</button>
         </div>
 
         <main id="grid" class="games-grid"></main>
@@ -289,6 +302,10 @@
         const grid = document.getElementById('grid');
         let apenasDouradosAtivo = false; 
 
+        // Variáveis do Modo para Cegos (Microfone Contínuo Independente)
+        let modoCegosAtivo = false;
+        let reconhecimentoCegos = null;
+
         // FUNÇÃO QUE FAZ O NAVEGADOR NARRAR A HISTÓRIA
         function falarTexto(texto) {
             if (!window.narracaoModoVozAtivo) return;
@@ -325,13 +342,144 @@
             }
         }
 
-        // SISTEMA DE RECONHECIMENTO DE VOZ MELHORADO (MAIS SENSÍVEL)
-        // SISTEMA DE RECONHECIMENTO DE VOZ (IGNORA HÍFENS TRANSFORMANDO EM ESPAÇO)
+        // ==========================================
+        //    LÓGICA ISOLADA DO MODO PARA CEGOS
+        // ==========================================
+
+        function alternarModoCegos() {
+            modoCegosAtivo = !modoCegosAtivo;
+            const btn = document.getElementById('btn-cegos');
+            
+            if (modoCegosAtivo) {
+                if (btn) {
+                    btn.classList.add('ativo');
+                    btn.innerText = "🟩 Modo para Cegos: LIGADO";
+                }
+                inicializarReconhecimentoCegos();
+            } else {
+                if (btn) {
+                    btn.classList.remove('ativo');
+                    btn.innerText = "👨‍🦯 Modo para Cegos: DESLIGADO";
+                }
+                if (reconhecimentoCegos) {
+                    try { reconhecimentoCegos.abort(); } catch(e){}
+                    reconhecimentoCegos = null;
+                }
+            }
+        }
+
+        function inicializarReconhecimentoCegos() {
+            if (reconhecimentoCegos) return;
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) return;
+
+            reconhecimentoCegos = new SpeechRecognition();
+            reconhecimentoCegos.lang = 'pt-BR';
+            reconhecimentoCegos.interimResults = false;
+            reconhecimentoCegos.maxAlternatives = 1;
+            reconhecimentoCegos.continuous = true; // Mantém o microfone sempre aberto
+
+            reconhecimentoCegos.onresult = (event) => {
+                const listaResultados = event.results;
+                const ultimoResultado = listaResultados[listaResultados.length - 1];
+                if (!ultimoResultado.isFinal) return;
+
+                let comando = ultimoResultado[0].transcript.toLowerCase().trim();
+                debugLog(`Modo Cego ouviu: "${comando}"`);
+
+                if (comando === 'ajuda' || comando.includes('ajuda')) {
+                    debugLog("Comandos: voltar, sorteio, melhores, fechar");
+                    return;
+                }
+
+                if (comando === 'voltar' || comando === 'fechar') {
+                    fechar();
+                    return;
+                }
+
+                if (comando.includes('sorteio') || comando.includes('dado')) {
+                    sortearTirinha();
+                    return;
+                }
+
+                if (comando.includes('melhores') || comando.includes('filtro')) {
+                    alternarFiltroDourado();
+                    return;
+                }
+
+                // Procurar por nomes de tirinhas falados
+                if (typeof JOGOS !== 'undefined') {
+                    let textoLimpo = comando.replace(/-/g, ' ').trim();
+
+                    for (const tirinha of JOGOS) {
+                        let nomeTirinhaLimpo = tirinha.nome.toLowerCase().replace(/\s*parte\s*\d+/gi, '').replace(/-/g, ' ').trim();
+
+                        if (textoLimpo.includes(nomeTirinhaLimpo) || nomeTirinhaLimpo.includes(textoLimpo)) {
+                            let cod = window.CODIGOS && window.CODIGOS[tirinha.nome] ? String(window.CODIGOS[tirinha.nome]).trim() : '';
+                            let grupo = JOGOS.filter(j => (window.CODIGOS && window.CODIGOS[j.nome]) === cod);
+                            let pastas = grupo.map(j => j.nome);
+                            
+                            abrirPorCodigo(cod, pastas);
+                            break;
+                        }
+                    }
+                }
+            };
+
+            reconhecimentoCegos.onerror = (e) => {
+                debugLog("Erro no microfone contínuo: " + e.error);
+                relerEscutaCegos();
+            };
+
+            reconhecimentoCegos.onend = () => {
+                if (modoCegosAtivo) {
+                    relerEscutaCegos();
+                }
+            };
+
+            try { reconhecimentoCegos.start(); } catch(e){}
+        }
+
+        function relerEscutaCegos() {
+            if (!modoCegosAtivo) return;
+            
+            // CORREÇÃO CRÍTICA: Elimina a instância antiga travada antes de recriar do zero.
+            if (reconhecimentoCegos) {
+                try { reconhecimentoCegos.abort(); } catch(e){}
+                reconhecimentoCegos = null;
+            }
+            
+            // Pequena folga protetora de milissegundos para o navegador processar a limpeza
+            setTimeout(() => {
+                if (modoCegosAtivo) {
+                    inicializarReconhecimentoCegos();
+                }
+            }, 350); 
+        }
+
+        // Atalho por teclado (Enter ou Espaço ativa o modo de escuta contínuo)
+        document.addEventListener('keydown', (e) => {
+            if (!modoCegosAtivo && (e.key === 'Enter' || e.code === 'Space')) {
+                if (document.activeElement.tagName !== 'SELECT' && document.activeElement.tagName !== 'INPUT') {
+                    e.preventDefault();
+                    alternarModoCegos();
+                }
+            }
+        });
+
+        // RECONHECIMENTO DE VOZ PADRÃO (BOTÃO INDIVIDUAL)
         function ligarReconhecimentoVoz() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
                 debugLog("O navegador não suporta comandos por voz.");
                 return;
+            }
+
+            // Desliga temporariamente o modo contínuo se for usar o botão manual único
+            if (modoCegosAtivo && reconhecimentoCegos) {
+                try { reconhecimentoCegos.abort(); } catch(e){}
+                reconhecimentoCegos = null;
             }
 
             const recognition = new SpeechRecognition();
@@ -344,39 +492,26 @@
 
             recognition.onresult = (event) => {
                 let textoFalado = event.results[0][0].transcript.toLowerCase().trim();
-                debugLog(`Ouvi original: "${textoFalado}"`);
-
-                // 1. Remove palavras duplicadas/repetidas sequenciais
                 textoFalado = textoFalado.replace(/\b(\w+)(?:\s+\1)+\b/g, '$1');
                 
-                // 2. Transforma plural em singular simples
                 if (textoFalado.endsWith('s') && textoFalado.length > 3) {
                     textoFalado = textoFalado.slice(0, -1);
                 }
                 
-                // 3. Finge que qualquer hífen no texto falado é um espaço
                 let textoFaladoLimpo = textoFalado.replace(/-/g, ' ').trim();
-                
-                debugLog(`Ouvi tratado: "${textoFaladoLimpo}"`);
-
                 if (typeof JOGOS === 'undefined' || !Array.isArray(JOGOS)) return;
 
                 let grupoEncontrado = null;
                 let codigoEncontrado = '';
 
                 for (const tirinha of JOGOS) {
-                    let nomeTirinha = String(tirinha.nome).toLowerCase();
-                    nomeTirinha = nomeTirinha.replace(/\s*parte\s*\d+/gi, '').trim();
-
-                    // Regra: Se o nome da tirinha original tiver hífen, finge que é espaço!
+                    let nomeTirinha = String(tirinha.nome).toLowerCase().replace(/\s*parte\s*\d+/gi, '').trim();
                     let nomeTirinhaLimpo = nomeTirinha.replace(/-/g, ' ').trim();
 
-                    // Faz a comparação com os nomes fingindo que os hífens são espaços
                     if (textoFaladoLimpo.includes(nomeTirinhaLimpo) || nomeTirinhaLimpo.includes(textoFaladoLimpo) || 
                         textoFaladoLimpo.split(' ').some(palavra => nomeTirinhaLimpo.includes(palavra) && palavra.length > 3)) {
                         
                         codigoEncontrado = window.CODIGOS && window.CODIGOS[tirinha.nome] ? String(window.CODIGOS[tirinha.nome]).trim() : '';
-                        
                         grupoEncontrado = JOGOS.filter(j => {
                             const c = window.CODIGOS && window.CODIGOS[j.nome] ? String(window.CODIGOS[j.nome]).trim() : '';
                             return c === codigoEncontrado;
@@ -393,8 +528,10 @@
                 }
             };
 
-            recognition.onerror = (event) => {
-                console.log("Erro reconhecimento: ", event.error);
+            recognition.onend = () => {
+                if (modoCegosAtivo) {
+                    relerEscutaCegos();
+                }
             };
         }
 
@@ -473,10 +610,9 @@
         function alternarFiltroDourado() {
             apenasDouradosAtivo = !apenasDouradosAtivo;
             const btn = document.getElementById('btn-filtro');
-            if (apenasDouradosAtivo) {
-                btn.classList.add('ativo');
-            } else {
-                btn.classList.remove('ativo');
+            if (btn) {
+                if (apenasDouradosAtivo) btn.classList.add('ativo');
+                else btn.classList.remove('ativo');
             }
             carregarTirinhas();
         }
@@ -486,7 +622,6 @@
             grid.innerHTML = '';
             
             const orderedObjects = getOrderedJogos();
-            debugLog(`Carregando ${orderedObjects.length} tirinhas...`);
 
             if (orderedObjects.length === 0) {
                 grid.innerHTML = '<p style="color:#4F4866; text-align:center; font-size: 1.5rem; font-weight: bold;">Nenhuma tirinha encontrada.</p>';
@@ -548,7 +683,7 @@
                     `;
                     grid.appendChild(card);
                 } catch (err) {
-                    console.error(`Erro ao renderizar grupo de código: ${codigo}`, err);
+                    console.error(err);
                 }
             }
         }
@@ -607,7 +742,6 @@
                     container.style.display = 'none';
                     if (tirinhaSorteada) {
                         const cod = window.CODIGOS && window.CODIGOS[tirinhaSorteada.nome] ? String(window.CODIGOS[tirinhaSorteada.nome]).trim() : '';
-                        
                         const grupoSorteado = JOGOS.filter(j => {
                             const c = window.CODIGOS && window.CODIGOS[j.nome] ? String(window.CODIGOS[j.nome]).trim() : '';
                             return c === cod;
@@ -654,6 +788,7 @@
             if (typeof window.speechSynthesis !== 'undefined') {
                 window.speechSynthesis.cancel();
             }
+            if (modoCegosAtivo) relerEscutaCegos();
         }
 
         function abrirModalEnvio() {
@@ -662,6 +797,7 @@
 
         function fecharModalEnvio() {
             document.getElementById('modal-envio').style.display = 'none';
+            if (modoCegosAtivo) relerEscutaCegos();
         }
 
         document.addEventListener('DOMContentLoaded', () => {
