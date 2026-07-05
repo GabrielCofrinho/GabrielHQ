@@ -30,7 +30,25 @@ const JOGOS = [
   { nome: "Bebês parte 2", Dourado: true },
   { nome: "Acampamento", Dourado: false },
   { nome: "Caixa com maçã", Dourado: false },
-  { nome: "A cola mais forte do mundo", Dourado: false }
+  { nome: "A cola mais forte do mundo", Dourado: false },
+  { nome: "Laser gun", Dourado: false },
+  { nome: "Ser um cientista", Dourado: false},
+  { nome: "Engarrafamento", Dourado: false},
+  { nome: "Fósseis", Dourado: false},
+  { nome: "Mukbang", Dourado: false},
+  { nome: "Sendo cuidado PORQUE", Dourado: false},
+  { nome: "Máquina do tempo parte 1", Dourado: true},
+  { nome: "Máquina do tempo parte 2", Dourado: true},
+  { nome: "Pause!", Dourado: false},
+  { nome: "Sequestrar", Dourado: false},
+  { nome: "Por dentro", Dourado: false},
+  { nome: "Pintar", Dourado: false},
+  { nome: "Universos cruzando", Dourado: false},
+  { nome: "Sanduíche", Dourado: false},
+  { nome: "Festa junina", Dourado: false},
+  { nome: "Máquina de qualquer coisa parte 1", Dourado: false},
+  { nome: "Máquina de qualquer coisa parte 2", Dourado: false},
+  { nome: "Máquina de qualquer coisa parte 3", Dourado: false}
 ];
 
 window.CODIGOS = {
@@ -65,5 +83,23 @@ window.CODIGOS = {
   "Bebês parte 2": "1905261TO",
   "Acampamento": "1905262TO",
   "Caixa com maçã": "2005261TO",
-  "A cola mais forte do mundo": "2105261TO"
+  "A cola mais forte do mundo": "2105261TO",
+  "Laser gun": "0806261TO",
+  "Ser um cientista": "1006261TO",
+  "Engarrafamento": "1006262TO",
+  "Fósseis": "1006263TO",
+  "Mukbang": "1106261TO",
+  "Sendo cuidado PORQUE": "1206261TO",
+  "Máquina do tempo parte 1": "1406261TO",
+  "Máquina do tempo parte 2": "1406261TO",
+  "Pause!": "1706261TO",
+  "Sequestrar": "1806261TO",
+  "Por dentro": "1806262TO",
+  "Pintar": "1906261TO",
+  "Universos cruzando": "2206261TO",
+  "Sanduíche": "2306262TO",
+  "Festa junina": "2406261TO",
+  "Máquina de qualquer coisa parte 1": "2606261TO",
+  "Máquina de qualquer coisa parte 2": "2606261TO",
+  "Máquina de qualquer coisa parte 3": "2606261TO"
 };

@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>GabrielTirinhas</title>
+    <title>GabrielHQ</title>
     <link rel="stylesheet" href="style.css">
     <style>
         /* Leitor que sobrepõe o site */
@@ -61,6 +61,30 @@
         }
         .btn-cegos.ativo {
             background: #006400; border-color: #006400; box-shadow: 0 0 10px rgba(0, 100, 0, 0.6);
+        }
+
+        /* ======== ESTILO DA BARRA DE PESQUISA ======== */
+        .container-pesquisa {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .input-pesquisa {
+            width: 80%;
+            max-width: 400px;
+            padding: 10px 15px;
+            font-size: 1.1rem;
+            border: 3px solid #4F4866;
+            border-radius: 25px;
+            outline: none;
+            font-family: 'Caveat', cursive;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .input-pesquisa:focus {
+            box-shadow: 0 0 10px rgba(79, 72, 102, 0.5);
+            width: 85%;
+            max-width: 450px;
         }
 
         /* Tela de sobreposição do dado */
@@ -238,35 +262,40 @@
 
     <div id="home">
         <header class="header-top">
-            <h1 class="logo">GabrielTirinhas. tirinhas para ler</h1>
+            <h1 class="logo">GabrielHQ. histórias em quadrinhos para ler</h1>
         </header>
+
+        <div class="container-pesquisa">
+            <input type="text" id="input-busca" class="input-pesquisa" placeholder="Pesquisar história em quadrinhos..." oninput="carregarTirinhas()">
+        </div>
+
         <div style="text-align:center; margin-bottom:20px;">
             <label for="sort-select" style="color:#4F4866; font-weight:700; margin-right:8px">Ordenar:</label>
             <select id="sort-select" style="font-family: 'Caveat', cursive; font-size:1.1rem; padding:6px 8px; border-radius:6px;">
                 <option value="default">Mais antigo</option>
                 <option value="recent">Mais recente</option>
-                <option value="name-asc">Nome A→Z</option>
-                <option value="name-desc">Nome Z→A</option>
+                <option value="name-asc">Nome A a Z</option>
+                <option value="name-desc">Nome Z a A</option>
             </select>
             
-            <button class="btn-sorteio" onclick="sortearTirinha()">🎲 SORTEIO</button>
+            <button class="btn-sorteio" onclick="sortearTirinha()">SORTEIO</button>
             <button id="btn-filtro" class="btn-filtro-dourado" onclick="alternarFiltroDourado()">Os melhores</button>
             
-            <button id="btn-narracao" class="btn-narracao" onclick="alternarModoVoz()">🔇 Narração: DESLIGADA</button>
-            <button class="btn-sorteio" onclick="ligarReconhecimentoVoz()">🎤 FALAR NOME</button>
+            <button id="btn-narracao" class="btn-narracao" onclick="alternarModoVoz()">Narração: DESLIGADA</button>
+            <button class="btn-sorteio" onclick="ligarReconhecimentoVoz()">FALAR NOME</button>
             
-            <button id="btn-cegos" class="btn-cegos" onclick="alternarModoCegos()">👨‍🦯 Modo para Cegos: DESLIGADO</button>
+            <button id="btn-cegos" class="btn-cegos" onclick="alternarModoCegos()">Modo para Cegos: DESLIGADO</button>
         </div>
 
         <main id="grid" class="games-grid"></main>
 
         <div class="container-propria-tirinha">
-            <button class="btn-propria-tirinha" onclick="abrirModalEnvio()">Quer colocar sua própria tirinha?</button>
+            <button class="btn-propria-tirinha" onclick="abrirModalEnvio()">Quer colocar sua própria história em quadrinhos?</button>
         </div>
     </div>
 
     <div id="leitor">
-        <button class="btn-voltar" onclick="fechar()">← VOLTAR</button>
+        <button class="btn-voltar" onclick="fechar()">VOLTAR</button>
         <div id="leitor-imagens"></div>
     </div>
 
@@ -285,12 +314,12 @@
 
     <div id="modal-envio" class="modal-envio">
         <div class="conteudo-modal">
-            <h3>Envie sua Tirinha!</h3>
+            <h3>Envie sua História em Quadrinhos!</h3>
             <p><strong>Email:</strong> <span class="email-destaque">cofrinho88@gmail.com</span></p>
-            <p>Se sua tirinha foi feita no tradicional (papel) não precisa refazer no digital, é só tirar foto!</p>
-            <p>Você precisa mandar foto da sua tirinha na mensagem.</p>
-            <p>Eu vou ver se a tirinha é apropriada para ficar no site.</p>
-            <p>Se você não enviar a thumbnail da tirinha então eu crio uma.</p>
+            <p>Se sua história em quadrinhos foi feita no tradicional (papel) não precisa refazer no digital, é só tirar foto!</p>
+            <p>Você precisa mandar foto da sua história em quadrinhos na mensagem.</p>
+            <p>Eu vou ver se a história em quadrinhos é apropriada para ficar no site.</p>
+            <p>Se você não enviar a thumbnail da história em quadrinhos então eu crio uma.</p>
             <button class="btn-fechar-modal" onclick="fecharModalEnvio()">Entendi</button>
         </div>
     </div>
@@ -306,7 +335,7 @@
         let modoCegosAtivo = false;
         let reconhecimentoCegos = null;
 
-        // FUNÇÃO DE SÍNTESE DO MODO CEGO (Para guiar o usuário pelas ações)
+        // FUNÇÃO DE SÍNTESE DO MODO CEGO
         function emitirAudioCego(texto) {
             if (typeof window.speechSynthesis === 'undefined' || !texto) return;
             window.speechSynthesis.cancel();
@@ -316,7 +345,11 @@
             window.speechSynthesis.speak(m);
         }
 
-        // FUNÇÃO QUE FAZ O NAVEGADOR NARRAR A HISTÓRIA (BOTÃO GERAL)
+        // FUNÇÃO QUE FAZ O NAVEGADOR NARRAR A HISTÓRIA
+        function talkText(texto) {
+            falarTexto(texto);
+        }
+
         function falarTexto(texto) {
             if (!window.narracaoModoVozAtivo) return;
             if (typeof window.speechSynthesis === 'undefined') return;
@@ -336,12 +369,12 @@
             if (btn) {
                 if (window.narracaoModoVozAtivo) {
                     btn.classList.add('ativo');
-                    btn.innerText = "🔊 Narração: LIGADA";
+                    btn.innerText = "Narração: LIGADA";
                     btn.style.background = "#ffd700";
                     btn.style.color = "#4F4866";
                 } else {
                     btn.classList.remove('ativo');
-                    btn.innerText = "🔇 Narração: DESLIGADA";
+                    btn.innerText = "Narração: DESLIGADA";
                     btn.style.background = "#4F4866";
                     btn.style.color = "white";
                 }
@@ -360,10 +393,7 @@
             }
         }
 
-        // ==========================================
-        //    LÓGICA DO MODO PARA CEGOS
-        // ==========================================
-
+        // LÓGICA DO MODO PARA CEGOS
         function alternarModoCegos() {
             modoCegosAtivo = !modoCegosAtivo;
             const btn = document.getElementById('btn-cegos');
@@ -371,10 +401,9 @@
             if (modoCegosAtivo) {
                 if (btn) {
                     btn.classList.add('ativo');
-                    btn.innerText = "🟩 Modo para Cegos: LIGADO";
+                    btn.innerText = "Modo para Cegos: LIGADO";
                 }
                 
-                // REGRA ADICIONADA: Ativa automaticamente a Narração padrão quando liga o modo cego
                 window.narracaoModoVozAtivo = true;
                 atualizarInterfaceNarracao();
 
@@ -383,10 +412,9 @@
             } else {
                 if (btn) {
                     btn.classList.remove('ativo');
-                    btn.innerText = "👨‍🦯 Modo para Cegos: DESLIGADO";
+                    btn.innerText = "Modo para Cegos: DESLIGADO";
                 }
                 
-                // Opcional: Desliga a narração ao sair do modo cego
                 window.narracaoModoVozAtivo = false;
                 atualizarInterfaceNarracao();
 
@@ -419,7 +447,7 @@
                 debugLog(`Modo Cego ouviu: "${comando}"`);
 
                 if (comando === 'ajuda' || comando.includes('ajuda')) {
-                    emitirAudioCego("Comandos disponíveis: voltar, sorteio, melhores, listar tirinhas.");
+                    emitirAudioCego("Comandos disponíveis: voltar, sorteio, melhores, listar histórias em quadrinhos.");
                     return;
                 }
 
@@ -430,32 +458,31 @@
                 }
 
                 if (comando.includes('sorteio') || comando.includes('dado')) {
-                    emitirAudioCego("Sorteando tirinha agora.");
+                    emitirAudioCego("Sorteando história em quadrinhos agora.");
                     sortearTirinha();
                     return;
                 }
 
                 if (comando.includes('melhores') || comando.includes('filtro')) {
                     alternarFiltroDourado();
-                    emitirAudioCego(apenasDouradosAtivo ? "Filtro ativado. Mostrando apenas os melhores." : "Filtro desativado. Mostrando todas as tirinhas.");
+                    emitirAudioCego(apenasDouradosAtivo ? "Filtro ativado. Mostrando apenas os melhores." : "Filtro desativado. Mostrando todas as histórias em quadrinhos.");
                     return;
                 }
 
-                if (comando.includes('listar') || comando.includes('tirinhas') || comando.includes('nomes')) {
+                if (comando.includes('listar') || comando.includes('quadrinhos') || comando.includes('nomes') || comando.includes('histórias')) {
                     if (typeof JOGOS !== 'undefined' && JOGOS.length > 0) {
                         let listaNomes = [];
                         JOGOS.forEach(j => {
                             let n = j.nome.replace(/\s*parte\s*\d+/gi, '').trim();
                             if (!listaNomes.includes(n)) listaNomes.push(n);
                         });
-                        emitirAudioCego("Tirinhas disponíveis: " + listaNomes.join(", "));
+                        emitirAudioCego("Histórias em quadrinhos disponíveis: " + listaNomes.join(", "));
                     } else {
-                        emitirAudioCego("Nenhuma tirinha encontrada.");
+                        emitirAudioCego("Nenhuma história em quadrinhos encontrada.");
                     }
                     return;
                 }
 
-                // Procurar por nomes falados
                 if (typeof JOGOS !== 'undefined') {
                     let textoLimpo = comando.replace(/-/g, ' ').trim();
                     let achou = false;
@@ -507,7 +534,6 @@
             }, 350); 
         }
 
-        // Atalho por teclado (Enter ou Espaço ativa o modo)
         document.addEventListener('keydown', (e) => {
             if (!modoCegosAtivo && (e.key === 'Enter' || e.code === 'Space')) {
                 if (document.activeElement.tagName !== 'SELECT' && document.activeElement.tagName !== 'INPUT') {
@@ -517,7 +543,7 @@
             }
         });
 
-        // RECONHECIMENTO DE VOZ PADRÃO (BOTÃO MANUAL)
+        // RECONHECIMENTO DE VOZ PADRÃO
         function ligarReconhecimentoVoz() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) return;
@@ -621,6 +647,14 @@
             if (typeof JOGOS === 'undefined' || !Array.isArray(JOGOS)) return [];
             
             let listaFiltrada = JOGOS.slice();
+
+            const termoBusca = document.getElementById('input-busca')?.value.toLowerCase().trim() || "";
+            if (termoBusca !== "") {
+                listaFiltrada = listaFiltrada.filter(item => 
+                    String(item.nome).toLowerCase().includes(termoBusca)
+                );
+            }
+
             if (apenasDouradosAtivo) {
                 listaFiltrada = listaFiltrada.filter(item => item.Dourado === true);
             }
@@ -666,7 +700,7 @@
             const orderedObjects = getOrderedJogos();
 
             if (orderedObjects.length === 0) {
-                grid.innerHTML = '<p style="color:#4F4866; text-align:center; font-size: 1.5rem; font-weight: bold;">Nenhuma tirinha encontrada.</p>';
+                grid.innerHTML = '<p style="color:#4F4866; text-align:center; font-size: 1.5rem; font-weight: bold;">Nenhuma história em quadrinhos encontrada.</p>';
                 return;
             }
 
@@ -697,7 +731,7 @@
                     if (primeiroItem.Dourado) {
                         classeDourado = 'card-dourado';
                         const nomeMes = getNomeMes(meta.rawMonth);
-                        textoExtraDourado = `<div class="tag-texto-dourado">Tirinha de ${nomeMes} de 20${meta.rawYear}!</div>`;
+                        textoExtraDourado = `<div class="tag-texto-dourado">História em quadrinhos de ${nomeMes} de 20${meta.rawYear}!</div>`;
                     }
 
                     if (itensDoGrupo.length > 1) {
@@ -741,7 +775,7 @@
             
             const rest = (codigo || '').slice(7).toUpperCase();
             let type = 'Desconhecido';
-            if (rest[0] === 'T') type = 'Tirinha';
+            if (rest[0] === 'T') type = 'História em Quadrinhos';
             if (rest[0] === 'D') type = 'Desenho';
             if (rest[0] === 'L') type = 'Livro';
             
@@ -791,7 +825,7 @@
                         const pastasSorteio = grupoSorteado.map(j => j.nome);
 
                         if (modoCegosAtivo) {
-                            emitirAudioCego("Tirinha número " + numeroDado + " sorteada: " + tirinhaSorteada.nome.replace(/\s*parte\s*\d+/gi, '').trim());
+                            emitirAudioCego("História em quadrinhos número " + numeroDado + " sorteada: " + tirinhaSorteada.nome.replace(/\s*parte\s*\d+/gi, '').trim());
                         }
                         abrirPorCodigo(cod, pastasSorteio);
                     }
@@ -804,6 +838,8 @@
             if (!Array.isArray(listaDePastas)) {
                 listaDePastas = [listaDePastas];
             }
+
+            listaDePastas.sort((a, b) => String(a).localeCompare(String(b), 'pt', { numeric: true, sensitivity: 'base' }));
 
             document.getElementById('home').style.display = 'none';
             document.getElementById('leitor').style.display = 'block';
