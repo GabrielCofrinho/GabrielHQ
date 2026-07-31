@@ -63,6 +63,26 @@
             background: #006400; border-color: #006400; box-shadow: 0 0 10px rgba(0, 100, 0, 0.6);
         }
 
+        /* Botão da IA */
+        .btn-ia {
+            background: #4F4866; color: white; border: 2px solid #DECADE; border-radius: 8px;
+            padding: 10px 20px; font-size: 1.1rem; font-weight: bold; cursor: pointer;
+            margin-left: 15px; transition: all 0.2s;
+            font-family: 'Caveat', cursive;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-ia:hover {
+            background: #DECADE; color: #4F4866; transform: scale(1.05);
+        }
+        .aviso-ia {
+            font-size: 0.95rem;
+            color: #4F4866;
+            margin-top: 10px;
+            font-style: italic;
+            font-weight: bold;
+        }
+
         /* ======== ESTILO DA BARRA DE PESQUISA ======== */
         .container-pesquisa {
             text-align: center;
@@ -285,6 +305,10 @@
             <button class="btn-sorteio" onclick="ligarReconhecimentoVoz()">FALAR NOME</button>
             
             <button id="btn-cegos" class="btn-cegos" onclick="alternarModoCegos()">Modo para Cegos: DESLIGADO</button>
+
+            <a href="ia.html" class="btn-ia">🤖 Conhecer Personagens (IA)</a>
+            
+            <div class="aviso-ia">(Aviso: essa IA só deve ser usada para conhecer melhor os personagens)</div>
         </div>
 
         <main id="grid" class="games-grid"></main>

@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GabrielHQ - IA da História</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .header-top h1 { color: #4F4866; font-family: 'Caveat', cursive; }
+        .container-ia { max-width: 800px; margin: 20px auto; padding: 20px; text-align: center; }
+        .status-badge { font-family: 'Caveat', cursive; font-size: 1.3rem; padding: 6px 14px; border-radius: 8px; background: #DECADE; color: #4F4866; display: inline-block; margin-bottom: 15px; font-weight: bold; border: 2px solid #4F4866; }
+        .aviso-ia { font-style: italic; font-size: 1.1rem; color: #666; margin-bottom: 15px; }
+
+        .chat-box {
+            background: #ffffff;
+            border: 3px solid #4F4866;
+            border-radius: 20px;
+            box-shadow: 4px 4px 0px #DECADE;
+            padding: 20px;
+            max-width: 750px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chat-feed {
+            max-height: 420px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .msg-row { display: flex; width: 100%; }
+        .msg-row.user { justify-content: flex-end; }
+        .msg-row.ia { justify-content: flex-start; }
+
+        .balloon {
+            font-family: 'Caveat', cursive;
+            font-size: 1.35rem;
+            line-height: 1.4;
+            padding: 12px 18px;
+            position: relative;
+            max-width: 80%;
+            box-shadow: 2px 2px 0px rgba(79, 72, 102, 0.15);
+        }
+
+        .balloon-user {
+            background: #4F4866;
+            color: #ffffff;
+            border-radius: 18px 18px 2px 18px;
+            border: 2px solid #4F4866;
+        }
+        .balloon-user::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: -10px;
+            width: 0;
+            height: 0;
+            border-top: 10px solid #4F4866;
+            border-right: 10px solid transparent;
+        }
+
+        .balloon-ia {
+            background: #DECADE;
+            color: #4F4866;
+            border-radius: 18px 18px 18px 2px;
+            border: 2px solid #4F4866;
+        }
+        .balloon-ia::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -10px;
+            width: 0;
+            height: 0;
+            border-top: 10px solid #DECADE;
+            border-left: 10px solid transparent;
+        }
+
+        .balloon-thought {
+            background: #ffffff;
+            color: #4F4866;
+            border: 2px dashed #4F4866;
+            border-radius: 18px;
+            font-size: 1.15rem;
+            max-width: 85%;
+        }
+
+        .box-pesquisa { display: flex; gap: 12px; justify-content: center; align-items: center; margin-top: 10px; }
+        .input-ia { width: 75%; padding: 10px 18px; border: 3px solid #4F4866; border-radius: 25px; font-family: 'Caveat', cursive; font-size: 1.4rem; color: #4F4866; background: #ffffff; outline: none; }
+        .btn-analisar { background: #4F4866; color: white; border: none; border-radius: 12px; padding: 10px 22px; font-size: 1.3rem; font-weight: bold; cursor: pointer; font-family: 'Caveat', cursive; }
+        .btn-analisar:hover { background: #3d3752; }
+    </style>
+</head>
+<body>
+
+    <div id="home">
+        <header class="header-top">
+            <h1 class="logo">Quer saber mais sobre os personagens?</h1>
+        </header>
+
+        <main class="container-ia">
+            <div id="statusScript" class="status-badge">Carregando informações...</div>
+            <p class="aviso-ia">(Aviso: Essa IA não é generativa.)</p>
+
+            <div class="chat-box">
+                <div id="chatFeed" class="chat-feed">
+                    <div class="msg-row ia">
+                        <div class="balloon balloon-ia">
+                            Olá! Digite sua pergunta sobre os personagens ou histórias abaixo... 💭
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box-pesquisa">
+                    <input type="text" id="pergunta" class="input-ia" placeholder="Digite sua pergunta..." onkeydown="tratarTeclaEnter(event)">
+                    <button class="btn-analisar" id="btnEnviar" onclick="processarPergunta()">Enviar</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="dicionário.js"></script>
+    <script src="informações.js"></script>
+    <script src="sons.js"></script>
+
+    <script>
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function iniciarAudioContext() {
+            if (!audioCtx) audioCtx = new AudioContext();
+        }
+
+        function tocarSintetizador8Bit(freq = 440, duracao = 0.03) {
+            iniciarAudioContext();
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duracao);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duracao);
+        }
+
+        function tocarSomLetra(prefixo, tom8bit = 440) {
+            let listaArquivos = [];
+
+            if (prefixo.startsWith("IAfala") && typeof SONS_IA !== 'undefined') {
+                listaArquivos = SONS_IA;
+            } else if (prefixo.startsWith("USERfala") && typeof SONS_USER !== 'undefined') {
+                listaArquivos = SONS_USER;
+            }
+
+            if (listaArquivos.length > 0) {
+                const indiceSorteado = Math.floor(Math.random() * listaArquivos.length);
+                const audio = new Audio(listaArquivos[indiceSorteado]);
+                audio.volume = 0.5;
+                audio.play().catch(() => {
+                    tocarSintetizador8Bit(tom8bit, 0.03);
+                });
+            } else {
+                tocarSintetizador8Bit(tom8bit, 0.03);
+            }
+        }
+
+        const PALAVRAS_IGNORADAS = [
+            "de", "do", "da", "dos", "das", "em", "no", "na", "nos", "nas", "para", "por", "com", 
+            "seu", "sua", "seus", "suas", "você", "voce", "o", "a", "os", "as", "um", "uma", "uns", "umas",
+            "ja", "tambem", "que", "se", "porq", "porque", "qual", "quais", "quem", "historia", "historias",
+            "hq", "hqs", "quadrinho", "quadrinhos", "ep", "episodio", "episodios", "idade", "anos", "funcao",
+            "moradia", "nome", "especie", "oi", "ola", "eai", "opa", "bom", "dia", "tarde", "noite"
+        ];
+
+        function obterBanco() {
+            return (typeof BANCO_PERSONAGENS !== 'undefined' && Array.isArray(BANCO_PERSONAGENS)) ? BANCO_PERSONAGENS : [];
+        }
+
+        function verificarECarregarBanco() {
+            let total = obterBanco().length;
+            let statusDic = (typeof dicionario !== 'undefined') ? " | 📖 Dicionário Conectado" : " | ⚠️ Dicionário Ausente";
+            let totalHist = (typeof HISTORIAS !== 'undefined') ? Object.keys(HISTORIAS).length : 0;
+            let statusHist = totalHist > 0 ? ` | 📜 ${totalHist} Histórias Carregadas` : " | ⚠️ Sem Histórias";
+            document.getElementById("statusScript").innerText = `✅ Informações carregadas (${total} personagens${statusDic}${statusHist})`;
+        }
+        document.addEventListener('DOMContentLoaded', verificarECarregarBanco);
+
+        function tratarTeclaEnter(e) { if (e.key === "Enter") processarPergunta(); }
+        
+        function removerAcentos(str) { 
+            if (!str) return '';
+            return String(str).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s-]/gi, ''); 
+        }
+
+        // Extrai o radical das palavras (ex: gritou, grita, gritando -> grit)
+        function extrairRadical(palavra) {
+            let p = removerAcentos(palavra);
+            if (p.length <= 3) return p;
+            return p.replace(/(ou|ando|endo|indo|ar|er|ir|am|em|ara|era|ira|as|es|is|a|e|o)$/i, '');
+        }
+
+        function escapeRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+        function aguardar(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+        function rolarParaOFinal() {
+            const feed = document.getElementById("chatFeed");
+            feed.scrollTop = feed.scrollHeight;
+        }
+
+        async function adicionarMensagemUsuario(texto) {
+            const feed = document.getElementById("chatFeed");
+            let idMsg = "msg-user-" + Date.now();
+
+            feed.innerHTML += `
+                <div class="msg-row user">
+                    <div class="balloon balloon-user" id="${idMsg}"></div>
+                </div>`;
+
+            const balão = document.getElementById(idMsg);
+            let i = 0;
+            let conteudoAtual = "";
+
+            while (i < texto.length) {
+                let char = texto[i];
+                conteudoAtual += char;
+                balão.innerText = conteudoAtual;
+                rolarParaOFinal();
+                if (char !== ' ' && char !== '\n') {
+                    tocarSomLetra("USERfala", 300);
+                }
+                await aguardar(30);
+                i++;
+            }
+            balão.innerText = texto;
+            rolarParaOFinal();
+        }
+
+        async function mostrarPensamento(passos) {
+            const feed = document.getElementById("chatFeed");
+            let idPensamento = "thought-" + Date.now();
+            
+            feed.innerHTML += `
+                <div class="msg-row ia" id="${idPensamento}">
+                    <div class="balloon balloon-thought">
+                        <b>💭 Pensamento da IA:</b><br>
+                        <span id="${idPensamento}-text"></span>
+                    </div>
+                </div>`;
+            
+            const spanText = document.getElementById(`${idPensamento}-text`);
+            for (let p of passos) {
+                spanText.innerHTML += `• ${p}<br>`;
+                rolarParaOFinal();
+                await aguardar(100);
+            }
+        }
+
+        async function responderIA(textoHTML) {
+            const feed = document.getElementById("chatFeed");
+            let idMsg = "msg-ia-" + Date.now();
+
+            feed.innerHTML += `
+                <div class="msg-row ia">
+                    <div class="balloon balloon-ia" id="${idMsg}"></div>
+                </div>`;
+
+            const balão = document.getElementById(idMsg);
+            let i = 0;
+            let emTag = false;
+            let conteudoAtual = "";
+
+            while (i < textoHTML.length) {
+                let char = textoHTML[i];
+                if (char === '<') emTag = true;
+                conteudoAtual += char;
+                if (char === '>') emTag = false;
+
+                if (!emTag) {
+                    balão.innerHTML = conteudoAtual;
+                    rolarParaOFinal();
+                    if (char !== ' ' && char !== '\n') {
+                        tocarSomLetra("IAfala", 650);
+                    }
+                    await aguardar(35);
+                }
+                i++;
+            }
+            balão.innerHTML = textoHTML;
+            rolarParaOFinal();
+        }
+
+        function textoContemTermo(textoAlvo, termo) {
+            let t = removerAcentos(textoAlvo);
+            let b = removerAcentos(termo);
+            if (!t || !b) return false;
+            let regex = new RegExp(`(?:^|\\s)${escapeRegExp(b)}(?:$|\\s)`, 'i');
+            return regex.test(t);
+        }
+
+        function extrairPersonagens(texto, lista) {
+            let t = removerAcentos(texto);
+            let achados = [];
+            for (let p of lista) {
+                let nomeL = removerAcentos(p.nome);
+                if (textoContemTermo(t, nomeL)) { 
+                    if (!achados.includes(p)) achados.push(p); 
+                    continue; 
+                }
+                if (p.apelidos) {
+                    let apList = Array.isArray(p.apelidos) ? p.apelidos : [p.apelidos];
+                    for (let ap of apList) {
+                        if (textoContemTermo(t, removerAcentos(ap))) { 
+                            if (!achados.includes(p)) achados.push(p); 
+                            break; 
+                        }
+                    }
+                }
+            }
+            return achados;
+        }
+
+        function formatarValor(val) {
+            if (Array.isArray(val)) return val.join(", ");
+            return val || "";
+        }
+
+        function listaContemItem(listaAlvo, itemBuscado) {
+            if (!listaAlvo) return false;
+            let itemNorm = removerAcentos(itemBuscado);
+            let arr = Array.isArray(listaAlvo) ? listaAlvo : [listaAlvo];
+            return arr.some(elem => removerAcentos(elem).includes(itemNorm) || itemNorm.includes(removerAcentos(elem)));
+        }
+
+        function buscarAcontecimentosGerais(nomePersonagem, palavrasChave) {
+            if (typeof HISTORIAS === 'undefined' || !HISTORIAS || palavrasChave.length === 0) return [];
+
+            let pNomeLimpo = nomePersonagem ? removerAcentos(nomePersonagem) : "";
+            let historiasEncontradas = [];
+
+            for (let codigo in HISTORIAS) {
+                let textoHistoria = HISTORIAS[codigo];
+                let histLimpa = removerAcentos(textoHistoria);
+
+                if (!pNomeLimpo || histLimpa.includes(pNomeLimpo)) {
+                    let todasEcontradas = true;
+                    for (let pChave of palavrasChave) {
+                        let termoLimpo = removerAcentos(pChave);
+                        let radicalTermo = extrairRadical(termoLimpo);
+
+                        // Busca tanto a palavra exata quanto o radical (ex: gritou / grita / grit)
+                        let achouAcao = histLimpa.includes(termoLimpo) || histLimpa.includes(radicalTermo);
+
+                        if (!achouAcao) {
+                            todasEcontradas = false;
+                            break;
+                        }
+                    }
+                    if (todasEcontradas) {
+                        historiasEncontradas.push({ titulo: codigo, historia: textoHistoria });
+                    }
+                }
+            }
+            return historiasEncontradas;
+        }
+
+        async function processarPergunta() {
+            const inputElement = document.getElementById("pergunta");
+            const btnElement = document.getElementById("btnEnviar");
+            const input = inputElement.value;
+            const lista = obterBanco();
+
+            if (!input.trim()) return;
+
+            inputElement.value = "";
+            inputElement.disabled = true;
+            btnElement.disabled = true;
+
+            await adicionarMensagemUsuario(input);
+
+            let tNorm = removerAcentos(input);
+            let passos = [`Analisando pergunta: "${input}"`];
+
+            let pedeTituloHistoria = /\b(qual|quais)\b.*\b(historia|historias|hq|hqs|quadrinho|quadrinhos|episodio|ep)\b/i.test(tNorm);
+
+            if (tNorm.includes("seu personagem favorito") || tNorm.includes("seu favorito")) {
+                passos.push("Pergunta sobre o personagem favorito da IA.");
+                await mostrarPensamento(passos);
+                await responderIA("Não sei qual é o seu favorito, mas o meu palpite é: <b>Beatbox</b>!");
+                finalizarPergunta();
+                return;
+            }
+
+            let personagensEncontrados = extrairPersonagens(input, lista);
+            let pAlvo = personagensEncontrados.length > 0 ? personagensEncontrados[0] : null;
+
+            if (pAlvo) passos.push(`Personagem identificado: <b>${pAlvo.nome}</b>`);
+
+            if (pedeTituloHistoria) {
+                passos.push(`Estrutura "QUAL É A HISTÓRIA/HQ" detectada.`);
+                let palavrasChave = tNorm.split(/\s+/)
+                    .map(w => w.replace(/[^\w-]/g, ""))
+                    .filter(w => w.length > 1 && !PALAVRAS_IGNORADAS.includes(w) && (!pAlvo || !removerAcentos(pAlvo.nome).includes(w)));
+
+                passos.push(`Pesquisando título com os termos: ${palavrasChave.join(", ")}`);
+                let resultados = buscarAcontecimentosGerais(pAlvo ? pAlvo.nome : null, palavrasChave);
+
+                await mostrarPensamento(passos);
+
+                if (resultados.length > 0) {
+                    let titulosFormatados = resultados.map(r => `<b>${r.titulo}</b>`).join("<br>• ");
+                    await responderIA(`A história em que isso acontece é: <br>• ${titulosFormatados}`);
+                } else {
+                    await responderIA(`Não encontrei nenhuma história cadastrada em que esses fatos aconteçam!`);
+                }
+                finalizarPergunta();
+                return;
+            }
+
+            if (pAlvo) {
+                let artCap = pAlvo.genero === "F" ? "A" : "O";
+                let artMin = pAlvo.genero === "F" ? "a" : "o";
+                let pronomeDeleDela = pAlvo.genero === "F" ? "dela" : "dele";
+
+                if (tNorm.includes("idade") || tNorm.includes("quantos anos")) {
+                    passos.push(`Consultando 'idade' de ${pAlvo.nome}...`);
+                    await mostrarPensamento(passos);
+                    await responderIA(`${artCap} <b>${pAlvo.nome}</b> tem <b>${pAlvo.idade} anos</b>.`);
+                    finalizarPergunta();
+                    return;
+                }
+
+                if (tNorm.includes("comida favorita") || tNorm.includes("comida preferida") || tNorm.includes("gosta de comer")) {
+                    passos.push(`Consultando 'comidaFavorita' de ${pAlvo.nome}...`);
+                    let comida = formatarValor(pAlvo.comidaFavorita);
+                    await mostrarPensamento(passos);
+                    await responderIA(`A comida favorita de <b>${pAlvo.nome}</b> é <b>${comida}</b>.`);
+                    finalizarPergunta();
+                    return;
+                }
+
+                if (tNorm.includes("onde mora") || tNorm.includes("moradia") || tNorm.includes("onde vive")) {
+                    passos.push(`Consultando 'moradia' de ${pAlvo.nome}...`);
+                    let morada = formatarValor(pAlvo.moradia);
+                    await mostrarPensamento(passos);
+                    await responderIA(`${artCap} <b>${pAlvo.nome}</b> mora em: <b>${morada}</b>.`);
+                    finalizarPergunta();
+                    return;
+                }
+
+                if (tNorm.includes("funcao") || tNorm.includes("papel")) {
+                    passos.push(`Consultando 'funcao' de ${pAlvo.nome}...`);
+                    let func = formatarValor(pAlvo.funcao);
+                    await mostrarPensamento(passos);
+                    await responderIA(`A função de <b>${pAlvo.nome}</b> é <b>${func}</b>.`);
+                    finalizarPergunta();
+                    return;
+                }
+
+                // CHECAGEM DE RELAÇÕES DA FICHA (quemOdeia / quemAma)
+                let ehPerguntaOdeia = tNorm.includes("odeia") || tNorm.includes("detesta") || tNorm.includes("nao gosta") || tNorm.includes("inimigo");
+                let ehPerguntaGosta = tNorm.includes("gosta") || tNorm.includes("ama") || tNorm.includes("amigo");
+
+                if (ehPerguntaOdeia || ehPerguntaGosta) {
+                    let pOutro = personagensEncontrados.length > 1 ? personagensEncontrados[1] : null;
+                    
+                    let alvoBusca = "";
+                    if (pOutro) {
+                        alvoBusca = pOutro.nome;
+                    } else {
+                        let palavrasLivres = tNorm.split(/\s+/).filter(w => !PALAVRAS_IGNORADAS.includes(w) && !removerAcentos(pAlvo.nome).includes(w) && !["odeia", "detesta", "gosta", "ama", "amigo", "inimigo"].includes(w));
+                        alvoBusca = palavrasLivres.join(" ");
+                    }
+
+                    if (alvoBusca) {
+                        passos.push(`Verificando sentimentos de ${pAlvo.nome} sobre "${alvoBusca}" nas fichas...`);
+                        
+                        let odeiaItem = listaContemItem(pAlvo.quemOdeia, alvoBusca);
+                        let amaItem = listaContemItem(pAlvo.quemAma, alvoBusca);
+
+                        await mostrarPensamento(passos);
+
+                        if (ehPerguntaOdeia) {
+                            if (odeiaItem) {
+                                await responderIA(`Sim! ${artCap} <b>${pAlvo.nome}</b> odeia <b>${alvoBusca}</b>.`);
+                            } else if (amaItem) {
+                                await responderIA(`Não! ${artCap} <b>${pAlvo.nome}</b> não odeia <b>${alvoBusca}</b> (na verdade, ama/gosta)!`);
+                            } else {
+                                await responderIA(`Não há registro na ficha de que ${artMin} <b>${pAlvo.nome}</b> odeia <b>${alvoBusca}</b>.`);
+                            }
+                            finalizarPergunta();
+                            return;
+                        }
+
+                        if (ehPerguntaGosta) {
+                            if (amaItem) {
+                                await responderIA(`Sim! ${artCap} <b>${pAlvo.nome}</b> gosta/ama <b>${alvoBusca}</b>.`);
+                            } else if (odeiaItem) {
+                                await responderIA(`Não! ${artCap} <b>${pAlvo.nome}</b> não gosta de <b>${alvoBusca}</b> (na verdade, odeia)!`);
+                            } else {
+                                await responderIA(`Não há registro na ficha de que ${artMin} <b>${pAlvo.nome}</b> gosta de <b>${alvoBusca}</b>.`);
+                            }
+                            finalizarPergunta();
+                            return;
+                        }
+                    }
+                }
+
+                // IDENTIDADE ("é um...", "é uma...")
+                let ehPerguntaIdentidade = /\b(e|eh|era)\s+(um|uma)\b/i.test(tNorm);
+                if (ehPerguntaIdentidade) {
+                    passos.push(`Detectada pergunta de IDENTIDADE ("é um / é uma").`);
+                    let termos = tNorm.split(/\s+/).filter(w => !PALAVRAS_IGNORADAS.includes(w) && !removerAcentos(pAlvo.nome).includes(w) && !["e", "eh", "era"].includes(w));
+                    let objeto = termos.pop() || "isso";
+                    let especieStr = formatarValor(pAlvo.especie);
+
+                    await mostrarPensamento(passos);
+
+                    if (textoContemTermo(especieStr, objeto)) {
+                        await responderIA(`Sim! ${artCap} <b>${pAlvo.nome}</b> é da espécie <b>${especieStr}</b>.`);
+                    } else {
+                        let artIndef = (objeto.endsWith("a") && !objeto.endsWith("ma")) ? "uma" : "um";
+                        await responderIA(`Não! ${artCap} <b>${pAlvo.nome}</b> não é ${artIndef} <b>${objeto}</b>. A espécie ${pronomeDeleDela} é <b>${especieStr}</b>.`);
+                    }
+                    finalizarPergunta();
+                    return;
+                }
+
+                // PESQUISA DE AÇÕES / VERBOS NAS HISTÓRIAS (EX: GRITOU, BEBEU, COMEU, PANQUECA)
+                let palavrasChave = tNorm.split(/\s+/)
+                    .map(w => w.replace(/[^\w-]/g, ""))
+                    .filter(w => w.length > 1 && !PALAVRAS_IGNORADAS.includes(w) && !removerAcentos(pAlvo.nome).includes(w));
+
+                if (palavrasChave.length > 0) {
+                    passos.push(`Pesquisando acontecimentos com os termos: ${palavrasChave.join(", ")}`);
+                    let resultados = buscarAcontecimentosGerais(pAlvo.nome, palavrasChave);
+
+                    await mostrarPensamento(passos);
+
+                    if (resultados.length > 0) {
+                        await responderIA(`Sim! O <b>${pAlvo.nome}</b> já fez isso nas histórias!`);
+                    } else {
+                        await responderIA(`Não! Não há registro nas histórias de que ${artMin} <b>${pAlvo.nome}</b> ${palavrasChave.join(" ")}.`);
+                    }
+                    finalizarPergunta();
+                    return;
+                }
+
+                await mostrarPensamento(passos);
+                await responderIA(`Ficha de <b>${pAlvo.nome}</b>:<br>` +
+                    `• Idade: ${pAlvo.idade} anos | Espécie: ${formatarValor(pAlvo.especie)}<br>` +
+                    `• Função: ${formatarValor(pAlvo.funcao)} | Moradia: ${formatarValor(pAlvo.moradia)}`);
+                finalizarPergunta();
+                return;
+            }
+
+            passos.push("Nenhum personagem foi reconhecido no texto.");
+            await mostrarPensamento(passos);
+            await responderIA("Não entendi a pergunta. Tente citar um personagem ou perguntar 'Qual é a história que...'!");
+            finalizarPergunta();
+        }
+
+        function finalizarPergunta() {
+            const inputElement = document.getElementById("pergunta");
+            const btnElement = document.getElementById("btnEnviar");
+            inputElement.disabled = false;
+            btnElement.disabled = false;
+            inputElement.focus();
+        }
+    </script>
+</body>
+</html>

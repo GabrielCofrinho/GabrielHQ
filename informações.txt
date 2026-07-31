@@ -1,0 +1,33 @@
+const BANCO_PERSONAGENS = [
+    {
+        nome: "Gabriel",
+	idade: 10,
+	espécie:
+        apelidos: ["Gabriel", "Gabi"],
+        função: "Protagonista",
+        comidaFavorita: "Panquecas",
+        quemOdeia: ["Nightcore", "Grita-grita", "Vermelho absoluto", "Todos os moradores da zônia da gritaria"]
+        quemAma: ["Beatbox", "Moradia"]
+	moradia: "Casa"
+    }
+    {
+        nome: "Beatbox",
+	idade: 12,
+        apelidos: "Beatbox",
+        função: "Protagonista secundário",
+        comidaFavorita: "Ovos",
+        quemOdeia: ["Nightcore", "Grita-grita", "Vermelho absoluto", "Todos os moradores da zônia da gritaria"]
+        quemAma: ["Gabriel", "Moradia"]
+	moradia: "Casa"
+    }
+    {
+        nome: "Nightcore",
+	idade: 6,
+        apelidos: ["Nightcore", "Night"],
+        função: "Antagonista",
+        comidaFavorita: ["Gabriel", "Pintinhos"]
+        quemOdeia: ["Beatbox," "Gabriel", "Pintinhos"]
+        quemAma: ["Grita-grita", "Vermelho absoluto", "Moradia"]
+	moradia: "Casa"
+    }
+];
