@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GabrielHQ - IA da História</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&display=swap" rel="stylesheet">
+    
     <style>
         .header-top h1 { color: #4F4866; font-family: 'Caveat', cursive; }
         .container-ia { max-width: 800px; margin: 20px auto; padding: 20px; text-align: center; }
@@ -106,7 +110,7 @@
 
         <main class="container-ia">
             <div id="statusScript" class="status-badge">Carregando informações...</div>
-            <p class="aviso-ia">(Aviso: Essa IA não é generativa.)</p>
+            <p class="aviso-ia">(Aviso: Essa IA não é generativa e pode cometer erros se a pergunta for complicada)</p>
 
             <div class="chat-box">
                 <div id="chatFeed" class="chat-feed">
@@ -132,6 +136,7 @@
     <script>
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
+        let ultimoPersonagemCitado = null; // Memória de contexto simples
 
         function iniciarAudioContext() {
             if (!audioCtx) audioCtx = new AudioContext();
@@ -173,12 +178,18 @@
             }
         }
 
+        // Função utilitária para sortear frases e evitar respostas repetitivas
+        function sortearResposta(opcoes) {
+            let idx = Math.floor(Math.random() * opcoes.length);
+            return opcoes[idx];
+        }
+
         const PALAVRAS_IGNORADAS = [
             "de", "do", "da", "dos", "das", "em", "no", "na", "nos", "nas", "para", "por", "com", 
             "seu", "sua", "seus", "suas", "você", "voce", "o", "a", "os", "as", "um", "uma", "uns", "umas",
-            "ja", "tambem", "que", "se", "porq", "porque", "qual", "quais", "quem", "historia", "historias",
+            "ja", "tambem", "que", "se", "porq", "porque", "qual", "quais", "historia", "historias",
             "hq", "hqs", "quadrinho", "quadrinhos", "ep", "episodio", "episodios", "idade", "anos", "funcao",
-            "moradia", "nome", "especie", "oi", "ola", "eai", "opa", "bom", "dia", "tarde", "noite"
+            "moradia", "nome", "especie", "oi", "ola", "eai", "opa", "bom", "dia", "tarde", "noite", "ele", "ela"
         ];
 
         function obterBanco() {
@@ -201,15 +212,26 @@
             return String(str).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s-]/gi, ''); 
         }
 
-        // Extrai o radical das palavras (ex: gritou, grita, gritando -> grit)
         function extrairRadical(palavra) {
             let p = removerAcentos(palavra);
-            if (p.length <= 3) return p;
-            return p.replace(/(ou|ando|endo|indo|ar|er|ir|am|em|ara|era|ira|as|es|is|a|e|o)$/i, '');
+            if (p.length <= 4) return p;
+            return p.replace(/(ou|ando|endo|indo|ar|er|ir|am|em|ara|era|ira|as|es|is)$/i, '');
         }
 
         function escapeRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
         function aguardar(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+        function formatarListaNatural(listaNomes) {
+            if (!listaNomes || listaNomes.length === 0) return "";
+            if (listaNomes.length === 1) return listaNomes[0];
+            if (listaNomes.length === 2) return `${listaNomes[0]} e ${listaNomes[1]}`;
+            return `${listaNomes.slice(0, -1).join(", ")} e ${listaNomes[listaNomes.length - 1]}`;
+        }
+
+        function obterComidaFavorita(personagem) {
+            if (!personagem) return "";
+            return personagem.comidaFavorita || personagem.comida_favorita || personagem.comida || "";
+        }
 
         function rolarParaOFinal() {
             const feed = document.getElementById("chatFeed");
@@ -282,7 +304,11 @@
                 let char = textoHTML[i];
                 if (char === '<') emTag = true;
                 conteudoAtual += char;
-                if (char === '>') emTag = false;
+                if (char === '>') {
+                    emTag = false;
+                    i++;
+                    continue;
+                }
 
                 if (!emTag) {
                     balão.innerHTML = conteudoAtual;
@@ -290,7 +316,7 @@
                     if (char !== ' ' && char !== '\n') {
                         tocarSomLetra("IAfala", 650);
                     }
-                    await aguardar(35);
+                    await aguardar(25);
                 }
                 i++;
             }
@@ -329,7 +355,7 @@
         }
 
         function formatarValor(val) {
-            if (Array.isArray(val)) return val.join(", ");
+            if (Array.isArray(val)) return formatarListaNatural(val);
             return val || "";
         }
 
@@ -356,7 +382,6 @@
                         let termoLimpo = removerAcentos(pChave);
                         let radicalTermo = extrairRadical(termoLimpo);
 
-                        // Busca tanto a palavra exata quanto o radical (ex: gritou / grita / grit)
                         let achouAcao = histLimpa.includes(termoLimpo) || histLimpa.includes(radicalTermo);
 
                         if (!achouAcao) {
@@ -389,21 +414,91 @@
             let tNorm = removerAcentos(input);
             let passos = [`Analisando pergunta: "${input}"`];
 
-            let pedeTituloHistoria = /\b(qual|quais)\b.*\b(historia|historias|hq|hqs|quadrinho|quadrinhos|episodio|ep)\b/i.test(tNorm);
-
             if (tNorm.includes("seu personagem favorito") || tNorm.includes("seu favorito")) {
                 passos.push("Pergunta sobre o personagem favorito da IA.");
                 await mostrarPensamento(passos);
-                await responderIA("Não sei qual é o seu favorito, mas o meu palpite é: <b>Beatbox</b>!");
+                let respFav = sortearResposta([
+                    "Não sei qual é o seu favorito, mas o meu com certeza é o <b>Beatbox</b>!",
+                    "Acho difícil escolher só um, mas gosto muito do <b>Beatbox</b>!",
+                    "Meu palpite principal é o <b>Beatbox</b>!"
+                ]);
+                await responderIA(respFav);
+                finalizarPergunta();
+                return;
+            }
+
+            // TRATAMENTO DE RESPOSTA NATURAL PARA "QUEM"
+            let ehPerguntaQuem = /\bquem\b/i.test(tNorm);
+            if (ehPerguntaQuem) {
+                passos.push(`Estrutura "QUEM" detectada.`);
+                
+                let termosBusca = tNorm.split(/\s+/)
+                    .map(w => w.replace(/[^\w-]/g, ""))
+                    .filter(w => w.length > 1 && !["quem", "e", "eh", "sao", "um", "uma", "o", "a", "os", "as", "dos", "das", "do", "da", "no", "na", "nos", "nas", "em", "de", "gosta", "mora", "vive"].includes(w));
+
+                let termoAlvo = termosBusca.join(" ");
+                let encontrados = [];
+
+                if (termoAlvo) {
+                    for (let p of lista) {
+                        let func = removerAcentos(formatarValor(p.funcao));
+                        let esp = removerAcentos(formatarValor(p.especie));
+                        let morada = removerAcentos(formatarValor(p.moradia));
+                        let com = removerAcentos(formatarValor(obterComidaFavorita(p)));
+                        
+                        if (func.includes(termoAlvo) || esp.includes(termoAlvo) || morada.includes(termoAlvo) || com.includes(termoAlvo)) {
+                            encontrados.push(p.nome);
+                        }
+                    }
+
+                    if (encontrados.length === 0 && typeof HISTORIAS !== 'undefined') {
+                        for (let p of lista) {
+                            let resHist = buscarAcontecimentosGerais(p.nome, termosBusca);
+                            if (resHist.length > 0) {
+                                encontrados.push(p.nome);
+                            }
+                        }
+                    }
+                }
+
+                await mostrarPensamento(passos);
+
+                if (encontrados.length > 0) {
+                    let listaFormatada = formatarListaNatural(encontrados);
+                    let resp = sortearResposta([
+                        `Quem tem relação com <b>${termoAlvo}</b> é: <b>${listaFormatada}</b>.`,
+                        `Quem está envolvido com <b>${termoAlvo}</b>: <b>${listaFormatada}</b>.`,
+                        `É o caso de <b>${listaFormatada}</b>!`
+                    ]);
+                    await responderIA(resp);
+                } else {
+                    let resp = sortearResposta([
+                        `Não encontrei nenhum personagem associado a <b>${termoAlvo || "isso"}</b>.`,
+                        `Ninguém parece ter relação com <b>${termoAlvo || "isso"}</b>.`
+                    ]);
+                    await responderIA(resp);
+                }
                 finalizarPergunta();
                 return;
             }
 
             let personagensEncontrados = extrairPersonagens(input, lista);
+            
+            // Suporte a memória de contexto (pronomes dele/ela)
+            if (personagensEncontrados.length === 0 && ultimoPersonagemCitado && (tNorm.includes("dele") || tNorm.includes("dela") || tNorm.includes("ele") || tNorm.includes("ela"))) {
+                personagensEncontrados.push(ultimoPersonagemCitado);
+                passos.push(`Usando contexto da pergunta anterior: <b>${ultimoPersonagemCitado.nome}</b>`);
+            }
+
             let pAlvo = personagensEncontrados.length > 0 ? personagensEncontrados[0] : null;
 
-            if (pAlvo) passos.push(`Personagem identificado: <b>${pAlvo.nome}</b>`);
+            if (pAlvo) {
+                ultimoPersonagemCitado = pAlvo;
+                passos.push(`Personagem principal identificado: <b>${pAlvo.nome}</b>`);
+            }
 
+            // PERGUNTAS SOBRE TÍTULOS DE HISTÓRIA
+            let pedeTituloHistoria = /\b(qual|quais)\b.*\b(historia|historias|hq|hqs|quadrinho|quadrinhos|episodio|ep)\b/i.test(tNorm);
             if (pedeTituloHistoria) {
                 passos.push(`Estrutura "QUAL É A HISTÓRIA/HQ" detectada.`);
                 let palavrasChave = tNorm.split(/\s+/)
@@ -417,46 +512,79 @@
 
                 if (resultados.length > 0) {
                     let titulosFormatados = resultados.map(r => `<b>${r.titulo}</b>`).join("<br>• ");
-                    await responderIA(`A história em que isso acontece é: <br>• ${titulosFormatados}`);
+                    await responderIA(`Isso acontece nas histórias:<br>• ${titulosFormatados}`);
                 } else {
-                    await responderIA(`Não encontrei nenhuma história cadastrada em que esses fatos aconteçam!`);
+                    await responderIA(`Não encontrei nenhuma história com esse acontecimento.`);
                 }
                 finalizarPergunta();
                 return;
             }
 
             if (pAlvo) {
-                let artCap = pAlvo.genero === "F" ? "A" : "O";
-                let artMin = pAlvo.genero === "F" ? "a" : "o";
                 let pronomeDeleDela = pAlvo.genero === "F" ? "dela" : "dele";
 
+                // PERGUNTA COMPARATIVA DE MÚLTIPLOS PERSONAGENS
+                if (personagensEncontrados.length > 1) {
+                    let p2 = personagensEncontrados[1];
+                    passos.push(`Comparando <b>${pAlvo.nome}</b> e <b>${p2.nome}</b>...`);
+
+                    if (tNorm.includes("mesmo lugar") || tNorm.includes("moram juntos") || tNorm.includes("mesma moradia")) {
+                        await mostrarPensamento(passos);
+                        let m1 = formatarValor(pAlvo.moradia);
+                        let m2 = formatarValor(p2.moradia);
+                        if (removerAcentos(m1) === removerAcentos(m2) && m1 !== "") {
+                            await responderIA(`Sim! Ambos moram em <b>${m1}</b>.`);
+                        } else {
+                            await responderIA(`Não, eles moram em lugares diferentes: ${pAlvo.nome} mora em <b>${m1 || "um local desconhecido"}</b> e ${p2.nome} em <b>${m2 || "outro lugar"}</b>.`);
+                        }
+                        finalizarPergunta();
+                        return;
+                    }
+                }
+
+                // IDADE
                 if (tNorm.includes("idade") || tNorm.includes("quantos anos")) {
                     passos.push(`Consultando 'idade' de ${pAlvo.nome}...`);
                     await mostrarPensamento(passos);
-                    await responderIA(`${artCap} <b>${pAlvo.nome}</b> tem <b>${pAlvo.idade} anos</b>.`);
+                    let resp = sortearResposta([
+                        `<b>${pAlvo.nome}</b> tem <b>${pAlvo.idade} anos</b>.`,
+                        `A idade de <b>${pAlvo.nome}</b> é <b>${pAlvo.idade} anos</b>.`
+                    ]);
+                    await responderIA(resp);
                     finalizarPergunta();
                     return;
                 }
 
-                if (tNorm.includes("comida favorita") || tNorm.includes("comida preferida") || tNorm.includes("gosta de comer")) {
-                    passos.push(`Consultando 'comidaFavorita' de ${pAlvo.nome}...`);
-                    let comida = formatarValor(pAlvo.comidaFavorita);
+                // COMIDA FAVORITA
+                if (tNorm.includes("comida") || tNorm.includes("prato") || tNorm.includes("alimento") || tNorm.includes("gosta de comer") || tNorm.includes("comer")) {
+                    passos.push(`Consultando comida favorita de ${pAlvo.nome}...`);
+                    let comida = formatarValor(obterComidaFavorita(pAlvo));
                     await mostrarPensamento(passos);
-                    await responderIA(`A comida favorita de <b>${pAlvo.nome}</b> é <b>${comida}</b>.`);
+                    if (comida) {
+                        let resp = sortearResposta([
+                            `A comida favorita de <b>${pAlvo.nome}</b> é <b>${comida}</b>.`,
+                            `<b>${pAlvo.nome}</b> ama comer <b>${comida}</b>!`
+                        ]);
+                        await responderIA(resp);
+                    } else {
+                        await responderIA(`Não há menção sobre a comida favorita de <b>${pAlvo.nome}</b>.`);
+                    }
                     finalizarPergunta();
                     return;
                 }
 
-                if (tNorm.includes("onde mora") || tNorm.includes("moradia") || tNorm.includes("onde vive")) {
+                // MORADIA
+                if (tNorm.includes("mora") || tNorm.includes("moradia") || tNorm.includes("vive") || tNorm.includes("reside") || tNorm.includes("endereco")) {
                     passos.push(`Consultando 'moradia' de ${pAlvo.nome}...`);
                     let morada = formatarValor(pAlvo.moradia);
                     await mostrarPensamento(passos);
-                    await responderIA(`${artCap} <b>${pAlvo.nome}</b> mora em: <b>${morada}</b>.`);
+                    await responderIA(`<b>${pAlvo.nome}</b> mora em <b>${morada}</b>.`);
                     finalizarPergunta();
                     return;
                 }
 
-                if (tNorm.includes("funcao") || tNorm.includes("papel")) {
+                // FUNÇÃO / PAPEL
+                if (tNorm.includes("funcao") || tNorm.includes("papel") || tNorm.includes("trabalho") || tNorm.includes("profissao")) {
                     passos.push(`Consultando 'funcao' de ${pAlvo.nome}...`);
                     let func = formatarValor(pAlvo.funcao);
                     await mostrarPensamento(passos);
@@ -465,13 +593,12 @@
                     return;
                 }
 
-                // CHECAGEM DE RELAÇÕES DA FICHA (quemOdeia / quemAma)
+                // RELAÇÕES (quemOdeia / quemAma)
                 let ehPerguntaOdeia = tNorm.includes("odeia") || tNorm.includes("detesta") || tNorm.includes("nao gosta") || tNorm.includes("inimigo");
                 let ehPerguntaGosta = tNorm.includes("gosta") || tNorm.includes("ama") || tNorm.includes("amigo");
 
                 if (ehPerguntaOdeia || ehPerguntaGosta) {
                     let pOutro = personagensEncontrados.length > 1 ? personagensEncontrados[1] : null;
-                    
                     let alvoBusca = "";
                     if (pOutro) {
                         alvoBusca = pOutro.nome;
@@ -481,7 +608,7 @@
                     }
 
                     if (alvoBusca) {
-                        passos.push(`Verificando sentimentos de ${pAlvo.nome} sobre "${alvoBusca}" nas fichas...`);
+                        passos.push(`Verificando sentimentos de ${pAlvo.nome} sobre "${alvoBusca}"...`);
                         
                         let odeiaItem = listaContemItem(pAlvo.quemOdeia, alvoBusca);
                         let amaItem = listaContemItem(pAlvo.quemAma, alvoBusca);
@@ -490,11 +617,15 @@
 
                         if (ehPerguntaOdeia) {
                             if (odeiaItem) {
-                                await responderIA(`Sim! ${artCap} <b>${pAlvo.nome}</b> odeia <b>${alvoBusca}</b>.`);
+                                await responderIA(`Sim, <b>${pAlvo.nome}</b> odeia <b>${alvoBusca}</b>!`);
                             } else if (amaItem) {
-                                await responderIA(`Não! ${artCap} <b>${pAlvo.nome}</b> não odeia <b>${alvoBusca}</b> (na verdade, ama/gosta)!`);
+                                await responderIA(`Na verdade não, <b>${pAlvo.nome}</b> gosta de <b>${alvoBusca}</b>!`);
                             } else {
-                                await responderIA(`Não há registro na ficha de que ${artMin} <b>${pAlvo.nome}</b> odeia <b>${alvoBusca}</b>.`);
+                                let respNao = sortearResposta([
+                                    `<b>${pAlvo.nome}</b> não odeia <b>${alvoBusca}</b>.`,
+                                    `Que eu saiba, <b>${pAlvo.nome}</b> não tem nada contra <b>${alvoBusca}</b>.`
+                                ]);
+                                await responderIA(respNao);
                             }
                             finalizarPergunta();
                             return;
@@ -502,11 +633,15 @@
 
                         if (ehPerguntaGosta) {
                             if (amaItem) {
-                                await responderIA(`Sim! ${artCap} <b>${pAlvo.nome}</b> gosta/ama <b>${alvoBusca}</b>.`);
+                                await responderIA(`Sim, <b>${pAlvo.nome}</b> gosta de <b>${alvoBusca}</b>!`);
                             } else if (odeiaItem) {
-                                await responderIA(`Não! ${artCap} <b>${pAlvo.nome}</b> não gosta de <b>${alvoBusca}</b> (na verdade, odeia)!`);
+                                await responderIA(`Na verdade não, <b>${pAlvo.nome}</b> odeia <b>${alvoBusca}</b>!`);
                             } else {
-                                await responderIA(`Não há registro na ficha de que ${artMin} <b>${pAlvo.nome}</b> gosta de <b>${alvoBusca}</b>.`);
+                                let respNao = sortearResposta([
+                                    `<b>${pAlvo.nome}</b> não gosta de <b>${alvoBusca}</b>.`,
+                                    `Não acho que <b>${pAlvo.nome}</b> goste de <b>${alvoBusca}</b>.`
+                                ]);
+                                await responderIA(respNao);
                             }
                             finalizarPergunta();
                             return;
@@ -514,57 +649,80 @@
                     }
                 }
 
-                // IDENTIDADE ("é um...", "é uma...")
-                let ehPerguntaIdentidade = /\b(e|eh|era)\s+(um|uma)\b/i.test(tNorm);
-                if (ehPerguntaIdentidade) {
-                    passos.push(`Detectada pergunta de IDENTIDADE ("é um / é uma").`);
-                    let termos = tNorm.split(/\s+/).filter(w => !PALAVRAS_IGNORADAS.includes(w) && !removerAcentos(pAlvo.nome).includes(w) && !["e", "eh", "era"].includes(w));
-                    let objeto = termos.pop() || "isso";
-                    let especieStr = formatarValor(pAlvo.especie);
+                // PERGUNTA DE ATRIBUTO/FUNÇÃO ("O Gabriel é o protagonista?")
+                let ehPerguntaAtributo = /\b(e|eh|era|seria)\b/i.test(tNorm);
+                if (ehPerguntaAtributo) {
+                    passos.push(`Detectada pergunta sobre atributo/função ("é...").`);
+                    
+                    let termos = tNorm.split(/\s+/).filter(w => 
+                        !PALAVRAS_IGNORADAS.includes(w) && 
+                        !removerAcentos(pAlvo.nome).includes(w) && 
+                        !["e", "eh", "era", "seria"].includes(w)
+                    );
+                    
+                    let termoAlvo = termos.join(" ");
 
-                    await mostrarPensamento(passos);
+                    if (termoAlvo) {
+                        let funcaoStr = removerAcentos(formatarValor(pAlvo.funcao));
+                        let especieStr = removerAcentos(formatarValor(pAlvo.especie));
 
-                    if (textoContemTermo(especieStr, objeto)) {
-                        await responderIA(`Sim! ${artCap} <b>${pAlvo.nome}</b> é da espécie <b>${especieStr}</b>.`);
-                    } else {
-                        let artIndef = (objeto.endsWith("a") && !objeto.endsWith("ma")) ? "uma" : "um";
-                        await responderIA(`Não! ${artCap} <b>${pAlvo.nome}</b> não é ${artIndef} <b>${objeto}</b>. A espécie ${pronomeDeleDela} é <b>${especieStr}</b>.`);
+                        await mostrarPensamento(passos);
+
+                        if (funcaoStr.includes(termoAlvo) || especieStr.includes(termoAlvo)) {
+                            await responderIA(`Sim! <b>${pAlvo.nome}</b> é <b>${termoAlvo}</b>.`);
+                        } else {
+                            await responderIA(`Não, <b>${pAlvo.nome}</b> não é <b>${termoAlvo}</b>. A função ou espécie ${pronomeDeleDela} é <b>${formatarValor(pAlvo.funcao) || formatarValor(pAlvo.especie)}</b>.`);
+                        }
+                        finalizarPergunta();
+                        return;
                     }
-                    finalizarPergunta();
-                    return;
                 }
 
-                // PESQUISA DE AÇÕES / VERBOS NAS HISTÓRIAS (EX: GRITOU, BEBEU, COMEU, PANQUECA)
+                // PESQUISA DE AÇÕES / VERBOS NAS HISTÓRIAS
                 let palavrasChave = tNorm.split(/\s+/)
                     .map(w => w.replace(/[^\w-]/g, ""))
                     .filter(w => w.length > 1 && !PALAVRAS_IGNORADAS.includes(w) && !removerAcentos(pAlvo.nome).includes(w));
 
                 if (palavrasChave.length > 0) {
-                    passos.push(`Pesquisando acontecimentos com os termos: ${palavrasChave.join(", ")}`);
+                    passos.push(`Pesquisando ações com os termos: ${palavrasChave.join(", ")}`);
                     let resultados = buscarAcontecimentosGerais(pAlvo.nome, palavrasChave);
 
                     await mostrarPensamento(passos);
 
                     if (resultados.length > 0) {
-                        await responderIA(`Sim! O <b>${pAlvo.nome}</b> já fez isso nas histórias!`);
+                        await responderIA(`Sim, <b>${pAlvo.nome}</b> já fez isso nas histórias!`);
                     } else {
-                        await responderIA(`Não! Não há registro nas histórias de que ${artMin} <b>${pAlvo.nome}</b> ${palavrasChave.join(" ")}.`);
+                        let acaoTexto = palavrasChave.join(" ");
+                        let respNao = sortearResposta([
+                            `<b>${pAlvo.nome}</b> nunca <b>${acaoTexto}</b>.`,
+                            `Nas histórias, <b>${pAlvo.nome}</b> nunca <b>${acaoTexto}</b>.`,
+                            `Não há nenhum relato de que <b>${pAlvo.nome}</b> tenha feito isso.`
+                        ]);
+                        await responderIA(respNao);
                     }
                     finalizarPergunta();
                     return;
                 }
 
+                // FALLBACK COM FICHA COMPLETA
                 await mostrarPensamento(passos);
+                let comidaFav = formatarValor(obterComidaFavorita(pAlvo)) || "Não informada";
                 await responderIA(`Ficha de <b>${pAlvo.nome}</b>:<br>` +
                     `• Idade: ${pAlvo.idade} anos | Espécie: ${formatarValor(pAlvo.especie)}<br>` +
-                    `• Função: ${formatarValor(pAlvo.funcao)} | Moradia: ${formatarValor(pAlvo.moradia)}`);
+                    `• Função: ${formatarValor(pAlvo.funcao)} | Moradia: ${formatarValor(pAlvo.moradia)}<br>` +
+                    `• Comida Favorita: ${comidaFav}`);
                 finalizarPergunta();
                 return;
             }
 
             passos.push("Nenhum personagem foi reconhecido no texto.");
             await mostrarPensamento(passos);
-            await responderIA("Não entendi a pergunta. Tente citar um personagem ou perguntar 'Qual é a história que...'!");
+            let respNaoEntendeu = sortearResposta([
+                "Não entendi muito bem. Tente citar o nome de um personagem ou perguntar algo como 'Quem é...'",
+                "Hmm, não consegui identificar sobre quem você está perguntando. Pode refazer a pergunta?",
+                "Não encontrei informações sobre isso. Tente perguntar sobre algum personagem específico!"
+            ]);
+            await responderIA(respNaoEntendeu);
             finalizarPergunta();
         }
 

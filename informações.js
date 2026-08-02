@@ -9,7 +9,7 @@ const BANCO_PERSONAGENS = [
         comidaFavorita: "Panquecas",
         quemOdeia: ["Nightcore", "Grita-grita", "Vermelho absoluto", "Todos os moradores da zônia da gritaria"],
         quemAma: ["Beatbox", "Moradia"],
-        moradia: "Casa"
+        moradia: "Casa do Gabriel"
     },
     {
         nome: "Beatbox",
@@ -21,7 +21,7 @@ const BANCO_PERSONAGENS = [
         comidaFavorita: "Ovos",
         quemOdeia: ["Nightcore", "Grita-grita", "Vermelho absoluto", "Todos os moradores da zônia da gritaria"],
         quemAma: ["Gabriel", "Moradia"],
-        moradia: "Casa"
+        moradia: "Casa do Beatbox"
     },
     {
         nome: "Nightcore",
@@ -33,7 +33,7 @@ const BANCO_PERSONAGENS = [
         comidaFavorita: ["Gabriel", "Pintinhos"],
         quemOdeia: ["Beatbox", "Gabriel", "Pintinhos"],
         quemAma: ["Grita-grita", "Vermelho absoluto", "Moradia"],
-        moradia: "Casa"
+        moradia: "Casa da Nightcore"
     },
     {
         nome: "Grita-grita",
@@ -45,7 +45,7 @@ const BANCO_PERSONAGENS = [
         comidaFavorita: ["Gabriel", "Beatbox"],
         quemOdeia: ["Beatbox", "Gabriel"],
         quemAma: ["Grita-grita", "Vermelho absoluto", "Moradia"],
-        moradia: ["Casa", "Zônia da gritaria"]
+        moradia: ["Casa do Grita-grita", "Zônia da gritaria"]
     },
     {
         nome: "Vermelho absoluto",
@@ -57,7 +57,7 @@ const BANCO_PERSONAGENS = [
         comidaFavorita: ["Gabriel", "Beatbox"],
         quemOdeia: ["Beatbox", "Gabriel"],
         quemAma: ["Grita-grita", "Vermelho absoluto", "Moradia"],
-        moradia: "Casa"
+        moradia: "Casa do Vermelho absoluto"
     }
 ];
 
