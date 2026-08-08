@@ -58,7 +58,139 @@ const BANCO_PERSONAGENS = [
         quemOdeia: ["Beatbox", "Gabriel"],
         quemAma: ["Grita-grita", "Vermelho absoluto", "Moradia"],
         moradia: "Casa do Vermelho absoluto"
-    }
+    },
+    {
+        nome: "Menina",
+        genero: "F",
+        idade: "Desconhecido",
+        especie: "Humano",
+        apelidos: "Menina",
+        funcao: "Terciário",
+        comidaFavorita: "Desconhecido",
+        quemOdeia: "Desconhecido",
+        quemAma: "Desconhecido",
+        moradia: "Desconhecido"
+    },
+    {
+        nome: "Sinal de divisão",
+        genero: "Desconhecido",
+        idade: "Desconhecido",
+        especie: "Sinal",
+        apelidos: "Sinal de divisão",
+        funcao: "Terciário",
+        comidaFavorita: "Desconhecido",
+        quemOdeia: "Desconhecido",
+        quemAma: "Desconhecido",
+        moradia: "Desconhecido"
+    },
+    {
+        nome: "Pintinhos",
+        genero: "Desconhecido",
+        idade: "Desconhecido",
+        especie: "Galinha",
+        apelidos: "Pintinhos",
+        funcao: "Secundário",
+        comidaFavorita: "Migalhas",
+        quemOdeia: "Desconhecido",
+        quemAma: "Desconhecido",
+        moradia: "Desconhecido"
+    },
+    {
+        nome: "Gambá",
+        genero: "Desconhecido",
+        idade: "Desconhecido",
+        especie: "Gambá",
+        apelidos: "Gambá",
+        funcao: "Terciário",
+        comidaFavorita: "Desconhecido",
+        quemOdeia: "Desconhecido",
+        quemAma: "Desconhecido",
+        moradia: "Desconhecido"
+    },
+    {
+        nome: "Gato fantasma",
+        genero: "M",
+        idade: "Desconhecido",
+        especie: "Gato",
+        apelidos: ["Gato fantasma", "Fantasma"],
+        funcao: "Secundário",
+        comidaFavorita: "Desconhecido",
+        quemOdeia: "Desconhecido",
+        quemAma: "Desconhecido",
+        moradia: "Desconhecido"
+    },
+    {
+        nome: "Sequestrador",
+        genero: "M",
+        idade: "Desconhecido",
+        especie: "Humano",
+        apelidos: "Sequestrador",
+        funcao: "Terciário",
+        comidaFavorita: "Desconhecido",
+        quemOdeia: "Desconhecido",
+        quemAma: "Desconhecido",
+        moradia: "Desconhecido"
+    },
+    {
+        nome: "Murilo",
+        genero: "M",
+        idade: "Desconhecido",
+        especie: "Humano",
+        apelidos: "Murilo",
+        funcao: "Terciário",
+        comidaFavorita: "Desconhecido",
+        quemOdeia: "Desconhecido",
+        quemAma: "Desconhecido",
+        moradia: "Desconhecido"
+    },
+    {
+        nome: "Diretora",
+        genero: "F",
+        idade: "Desconhecido",
+        especie: "Humano",
+        apelidos: "Diretora",
+        funcao: "Terciário",
+        comidaFavorita: "Desconhecido",
+        quemOdeia: "Desconhecido",
+        quemAma: "Desconhecido",
+        moradia: "Desconhecido"
+    },
+    {
+        nome: "Gacore",
+        genero: "Qualquer",
+        idade: "Desconhecido",
+        especie: ["Fusão", "Gato humanoide"],
+        apelidos: ["Gacore", "Gabriel", "Nightcore"],
+        funcao: "Terciário",
+        comidaFavorita: ["Beatbox", "Pintinhos"],
+        quemOdeia: "Ninguém",
+        quemAma: ["Beatbox", "Grita-grita", "Vermelho absoluto"],
+        moradia: "Desconhecido"
+    },
+    {
+        nome: "Vizinho",
+        genero: "Desconhecido",
+        idade: "Desconhecido",
+        especie: "Humano",
+        apelidos: "Vizinho",
+        funcao: "Terciário",
+        comidaFavorita: "Desconhecido",
+        quemOdeia: "Desconhecido",
+        quemAma: "Desconhecido",
+        moradia: "Do lado da moradia do Gabriel"
+    },
+    {
+        nome: "Rato",
+        genero: "Desconhecido",
+        idade: "Desconhecido",
+        especie: "Rato",
+        apelidos: "Rato",
+        funcao: "Terciário",
+        comidaFavorita: "Plantações",
+        quemOdeia: "Desconhecido",
+        quemAma: "Desconhecido",
+        moradia: "Desconhecido"
+    },
 ];
 
 window.HISTORIAS = {
@@ -103,5 +235,13 @@ window.HISTORIAS = {
     "Universos cruzando - 2206261TO": "Um universo estava aproximando de outro universo e os universos se chocaram e começaram a se misturar até virar um único universo. Treme e o Gabriel e o Murilo voa no céu e cai no chão, o Gabriel vê o Murilo mas o Gabriel percebe o GRITA GRITA DE LONGE E O INSTINTO DELES BATEM E O GABRIEL E O MURILO CORREM, MAS ELES SE DEPARAM COM UM BALDE DE TINTA GIGANTE VIRANDO E DAÍ TODA A TINTA ESTÁ ESPALHADA EXCETO AO REDOR DELES, O GABRIEL MESMO SUJANDO OS SAPATOS FOGE DALI, mas ele encontra um buraco e ele é sugado para dentro gritando: SOCORRO! E ELE É SUGADO E O BURACO FALA: Hum! Gostoso! Que gostoso!",
     "Sanduíche - 2306261TO": "O Gabriel olhou para 2 pães e decidiu colocar algumas barras de chocolate no pão e juntar com o outro e depois colocar no microondas e depois de um tempo fica pronto e o Gabriel saboreia.",
     "Festa junina - 2406261TO": "O Gabriel estava em uma festa junina sozinho e decidiu pegar o balde de pipoca e comer tudo, e depois ele pega um milho e come tudo, mas um bichinho cheira as comidas de longe e decide invadir a festa e pega um milho mas o Gabriel percebe rapidamente e fala: SHO! SHO! enquanto balança os braços para espantar, mas o Gabriel pisa em uma corda e é capturado e levado para o céu.",
-    "Máquina de qualquer coisa - 2606261TO": "O Gabriel encontrou uma máquina de qualquer coisa e decidiu digitar: Folha. a máquina clonou uma folha, e daí o Gabriel decide digitar: Qualquer folha. e a máquina clona um desenho de uma criança de gato. O Gabriel decide digitar: Átomo, e a Máquina fez um átomo, e depois o Gabriel digitou: 2 Qualquer fêmeas, a máquina fez uma galinha e uma gata. O Gabriel liga para o Beatbox e fala: Tem um lugar legal. E o Beatbox responde: Tô indo. O Beatbox chega e o Gabriel fala: Essa máquina consegue clonar qualquer coisa que você digita. O Gabriel digita um lápis para mostrar e o Beatbox digita: Beatbox, e o clone do Beatbox cai de cabeça no chão e grita: AI! e o Beatbox coloca uma bandeira na cabeça e fala: Coloquei uma bandeira na cabeça para diferenciar, mas o clone do Beatbox PEGA O BEATBOX E GRITA COM ELE: VOCÊ NÃO É O BEATBOX! MAS O GABRIEL DECIDE PEGAR O CLONE E O CLONE RECLAMA: ME SOLTA! E O GABRIEL JOGA ELE NA LIXEIRA DE CLONES E FALA: Clone irritante. E O CLONE É DELETADO. O Gabriel fala: Quero batalhar, enquanto digita: Espada, e: Nightcore, a máquina faz uma espada e o clone da Nightcore e quando o Gabriel estava prestes a cortar a Nightcore ela saiu correndo falando: MAMÃE! Depois de um tempo o clone vai para a casa e vê a Nightcore real e a Nightcore real fala: A gente é igual. e o clone fala: Fale a última coisa que você fez, e a real responde: Almoçar pintinhos! e o clone fala: Eu também! e eu gritei MAMÃE! mas a real engole o clone suspeitando enquanto o clone grita: PORQUÊ??"
+    "Máquina de qualquer coisa - 2606261TO": "O Gabriel encontrou uma máquina de qualquer coisa e decidiu digitar: Folha. a máquina clonou uma folha, e daí o Gabriel decide digitar: Qualquer folha. e a máquina clona um desenho de uma criança de gato. O Gabriel decide digitar: Átomo, e a Máquina fez um átomo, e depois o Gabriel digitou: 2 Qualquer fêmeas, a máquina fez uma galinha e uma gata. O Gabriel liga para o Beatbox e fala: Tem um lugar legal. E o Beatbox responde: Tô indo. O Beatbox chega e o Gabriel fala: Essa máquina consegue clonar qualquer coisa que você digita. O Gabriel digita um lápis para mostrar e o Beatbox digita: Beatbox, e o clone do Beatbox cai de cabeça no chão e grita: AI! e o Beatbox coloca uma bandeira na cabeça e fala: Coloquei uma bandeira na cabeça para diferenciar, mas o clone do Beatbox PEGA O BEATBOX E GRITA COM ELE: VOCÊ NÃO É O BEATBOX! MAS O GABRIEL DECIDE PEGAR O CLONE E O CLONE RECLAMA: ME SOLTA! E O GABRIEL JOGA ELE NA LIXEIRA DE CLONES E FALA: Clone irritante. E O CLONE É DELETADO. O Gabriel fala: Quero batalhar, enquanto digita: Espada, e: Nightcore, a máquina faz uma espada e o clone da Nightcore e quando o Gabriel estava prestes a cortar a Nightcore ela saiu correndo falando: MAMÃE! Depois de um tempo o clone vai para a casa e vê a Nightcore real e a Nightcore real fala: A gente é igual. e o clone fala: Fale a última coisa que você fez, e a real responde: Almoçar pintinhos! e o clone fala: Eu também! e eu gritei MAMÃE! mas a real engole o clone suspeitando enquanto o clone grita: PORQUÊ??",
+    "Zumbís - 0107261TO": "Ding dong! o Gabriel abre a porta e vê um balde com um líquido verde estranho, ele decide fazer uma pegadinha e coloca o balde em cima da porta e quando a Nightcore chega e abre a porta daí o balde cai nela e ela grita: SOCORRO! Mas ela se transforma em zumbí e o Gabriel rapidamente constrói uma torre de caixas e sobe nela, mas a Nightcore consegue subir na torre e o Gabriel sai da caixa e corre fora da casa dele. Daí ele tropeça numa poção com um líquido azul e pensa: Se fosse a cura para os zumbís? e daí a Nightcore tropeça na poção e ela se transforma de volta ao normal, ela pergunta para si mesma: Onde eu tô? mas o Gabriel se esconde na parede e a Nightcore não percebe e a Nightcore fala para si mesma: Vou voltar para a minha casa, e daí o Gabriel percebe que está a 1 PASSO DE SALVAR O MUNDO! E ELE PERCEBE QUE O GRITA-GRITA VIROU ZUMBÍ E ESTÁ PERSEGUINDO O GABRIEL! Mas o Gabrie consegue fugir e teve UMA IDEIA! CAVAR UM BURACO PARA FAZER TODOS OS ZUMBÍS CAIREM NELE! Daí ele vê a Nightcore zumbí e fala: Denovo?? mas ele começa a cavar o buraco e depois termina, daí todos os zumbís vem e caem no buraco, daí o Gabriel despeja a poção para o buraco, daí os zumbís começam a se transformar ao normal e sai fumaça e o Gabriel tosse mas ele conseguiu SALVAR A HUMANIDADE!",
+    "Inverno - 0307261TO": "O Gabriel estava tomando chocolate quente e percebe que está nevando, resumo: Ele nunca viu neve. ELE FICA FELIZ E SAI DE CASA E COMEÇA A FAZER UM BONECO DE NEVE! E DEPOIS DE FAZER UM BONECO DE NEVE DAÍ ELE PEGA UM ALVO E COMEÇA A PRATICAR MIRA COM BOLAS DE NEVES MAS ELE VÊ A NIGHTCORE E JOGA A BOLA DE NEVE DE LONGE E NEM DOEU! ELA COMEÇA A CHORAR E UMA MULTIDÃO DE PESSOAS FICAM PERTO E FALAM: Porque você tá chorando? Tudo bem? Se-acalme. e daí a Nightcore começa a ENGOLIR ESSAS PESSOAS E ELAS COMEÇAM A ENTRAR EM PÂNICO E FUGIR mas o Gabriel pensa: Choro = Isca! mas a Nightcore percebe e pensa: A bola veio da casa do Gabriel! daí ela vai até a casa do Gabriel e o Gabriel fica ASSUSTADO!",
+    "Pesca - 0507261TO": "O Beatbox tava pescando e consegue pegar o peixe e coloca no balde de peixes.",
+    "Gambá - 0607261TO": "O Gabriel vê um gambá e começa a correr mas o gambá percebe e começa a correr atrás do Gabriel e alcança e PEIDA NELE! O GABRIEL COMEÇA A CORRER E VÊ UM COMERCIAL DE SPRAY ANTI GAMBÁ E ELE CORRE PARA A LOJA E COMPRA O SPRAY ANTI GAMBÁ, PASSA NO GAMBÁ E o gambá sai daquí.",
+    "Botões - 0807261TO": "O Gabriel estava preso em uma sala cheio de botões e ele decide apertar em um botão e CRESCE! e ele aperta em vários botões e ele diminuiu e ficou cinza, ele percebeu que ele pode escapar pelo buraco embaixo da porta e escapa pelo buraco.",
+    "Sólido, Líquido e Gasoso - 0807262TO": "O Gabriel encontra uma máquina mas ele acha que é de cubo, suco e fumaça, ele decide apertar no líquido e entrar na máquina, os braços da máquina pegam ele e derrete ele em uma jarra, mas o Gabriel percebe que não era suco e era líquido, ele decide apertar o botão de gasoso e ele é evaporado. ele decide ir até a Nightcore fazendo ela tossir e voltar para a máquina e virar sólido.",
+    "Rápido - 1307261TO": "O Gabriel tropeça e quebra uma poção com líquido laranja, SPLASH! O Gabriel fica rápido e nem percebe, ele continua andando e PERCEBE QUE ESTÁ RÁPIDO MAS A NIGHTCORE APARECE E O GABRIEL NEM PERCEBE E PISA NA NIGHTCORE E ELA COMEÇA A CHORAR DIZENDO: ELE É RÁPIDO!",
+    "Mescla-bot - 1307262TO": "O Gabriel estava fugindo da Nightcore e um robô aparece e coloca eles dentro e começa a mesclar eles: REMEXE MEXE! REMEXE MEME! Depois eles são mesclados e viram o GACORE! A MISTURA DE GABRIEL E NIGHTCORE! o Gacore pensa: Pelo? Mãos? Rabo? Ele vê o Beatbox e pensa: Se eu engolir ele daí ele não vai gostar de mim, mas ele é gostoso! Eu mesmo ou os outros? Daí o Gacore decide rolar a roleta e cai em SIM! o Gacore engole ele e depois ele está assistindo um canal, a Tv: Você sabia que os tubarão-martelos- e o Beatbox não para quieto e o Gacore fala: Se aquieta!"
 };
